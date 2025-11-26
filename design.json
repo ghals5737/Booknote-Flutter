@@ -1,0 +1,102 @@
+{
+    "designSystem": {
+      "globalPalette": {
+        "primary": {
+          "brandBlue": "#4F54E8",
+          "brandLightTint": "#E8EAF6",
+          "brandHover": "#3D42C9"
+        },
+        "neutrals": {
+          "backgroundCanvas": "#F7F8FA",
+          "surfaceWhite": "#FFFFFF",
+          "borderSubtle": "#E5E7EB",
+          "divider": "#F3F4F6"
+        },
+        "typography": {
+          "headingDark": "#111827",
+          "bodyMedium": "#4B5563",
+          "metaLight": "#9CA3AF",
+          "placeholder": "#D1D5DB"
+        }
+      },
+      "componentStyles": {
+        "layoutContainers": {
+          "appShell": {
+            "backgroundColor": "#FFFFFF",
+            "outerBorder": "1px solid #E5E7EB",
+            "cornerRadius": "12px",
+            "maxWidth": "375px"
+          },
+          "contentCanvas": {
+            "backgroundColor": "#F7F8FA"
+          }
+        },
+        "cards": {
+          "bookStatusCard": {
+            "surfaceColor": "#FFFFFF",
+            "borderRadius": "16px",
+            "borderTreatment": "1px solid #F3F4F6",
+            "elevationShadow": "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+            "spacing": {
+              "padding": "16px",
+              "marginBottom": "12px"
+            },
+            "layout": "flex-row"
+          },
+          "bookGridCard": {
+            "surfaceColor": "#FFFFFF",
+            "borderRadius": "16px",
+            "elevationShadow": "0 2px 8px rgba(0, 0, 0, 0.04)",
+            "layout": "flex-column"
+          }
+        },
+        "visualIndicators": {
+          "progressBar": {
+            "trackColor": "#E5E7EB",
+            "fillColor": "#4F54E8",
+            "height": "6px",
+            "borderRadius": "4px",
+            "context": "Located below title/author, spans available width minus percentages"
+          }
+        },
+        "navigationAndInput": {
+          "searchBar": {
+            "surfaceColor": "#FFFFFF",
+            "borderColor": "#E5E7EB",
+            "borderRadius": "8px", // Slightly less rounded than pills
+            "iconColor": "#9CA3AF",
+            "height": "48px"
+          },
+          "filterPills": {
+            "baseRadius": "20px",
+            "states": {
+              "selected": {
+                "surfaceColor": "#E0E7FF", // Tinted brand color
+                "textColor": "#4F54E8",
+                "fontWeight": "600"
+              },
+              "unselected": {
+                "surfaceColor": "#F3F4F6",
+                "textColor": "#4B5563",
+                "fontWeight": "400"
+              }
+            }
+          },
+          "bottomTabBar": {
+            "surfaceColor": "#FFFFFF",
+            "borderTop": "1px solid #F3F4F6",
+            "itemStates": {
+              "active": {
+                "iconColor": "#4F54E8",
+                "textColor": "#4F54E8"
+              },
+              "inactive": {
+                "iconColor": "#9CA3AF",
+                "textColor": "#9CA3AF"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
