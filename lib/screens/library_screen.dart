@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/book.dart';
+import '../models/book/book.dart';
 import '../data/mock_data.dart';
 import '../widgets/book_card.dart';
 import '../widgets/category_filter.dart';

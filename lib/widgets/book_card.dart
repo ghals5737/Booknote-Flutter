@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/book.dart';
+import '../models/book/book.dart';
 import '../theme/app_theme.dart';
 
 /// design.json 기반 BookStatusCard 스타일

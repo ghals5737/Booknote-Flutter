@@ -1,61 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/app_theme.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/library_screen.dart';
-import 'screens/search_screen.dart';
-import 'screens/review_screen.dart';
-import 'screens/statistics_screen.dart';
-import 'widgets/bottom_nav_bar.dart';
+import 'router/app_router.dart';
+import 'providers/auth/auth_providers.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // 앱 시작 시 인증 Repository 초기화 (저장된 사용자 정보 로드)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final repository = ref.read(authRepositoryProvider);
+      repository.initialize().then((_) {
+        final user = repository.getCurrentUser();
+        ref.read(currentUserProvider.notifier).state = user;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
       title: 'Booknote',
       theme: AppTheme.lightTheme,
-      home: const MainScreen(),
+      routerConfig: router,
       debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // 기본적으로 대시보드 화면 표시
-
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const LibraryScreen(),
-    const SearchScreen(),
-    const ReviewScreen(),
-    const StatisticsScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundCanvas,
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
     );
   }
 }
