@@ -7,8 +7,10 @@ import '../screens/library_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/review_screen.dart';
 import '../screens/statistics_screen.dart';
+import '../screens/book_detail_screen.dart';
 import '../providers/auth/auth_providers.dart';
 import '../models/auth/user.dart';
+import '../models/book/book.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../theme/app_theme.dart';
 
@@ -46,6 +48,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/',
         name: 'home',
         builder: (context, state) => const MainScreen(),
+        routes: [
+          // 책 상세 화면
+          GoRoute(
+            path: 'book/:bookId',
+            name: 'bookDetail',
+            builder: (context, state) {
+              final book = state.extra as Book?;
+              if (book == null) {
+                final bookId = int.parse(state.pathParameters['bookId']!);
+                return BookDetailScreen(
+                  book: Book(
+                    id: bookId,
+                    title: '알 수 없는 책',
+                    author: '알 수 없는 저자',
+                    category: '기타',
+                    totalPages: 0,
+                    currentPage: 0,
+                  ),
+                );
+              }
+              return BookDetailScreen(book: book);
+            },
+          ),
+        ],
       ),
     ],
   );

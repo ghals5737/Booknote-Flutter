@@ -3,6 +3,7 @@ import 'package:booknoteflutter/models/book/book.dart';
 import 'package:booknoteflutter/widgets/category_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod import
+import 'package:go_router/go_router.dart';
 import '../providers/book/book_providers.dart';
 import '../widgets/book_card.dart';
 import '../theme/app_theme.dart';
@@ -125,7 +126,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             );
                           }
                           return Column(
-                            children: recentReadBooks.map((book) => BookCard(book: book)).toList(),
+                            children: recentReadBooks.map((book) => BookCard(
+                              book: book,
+                              onTap: () {
+                                context.push('/book/${book.id}', extra: book);
+                              },
+                            )).toList(),
                           );
                         },
                         loading: () => const Center(child: CircularProgressIndicator()),
@@ -274,7 +280,7 @@ class _BookGridCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // 책 상세 페이지로 이동
+            context.push('/book/${book.id}', extra: book);
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
