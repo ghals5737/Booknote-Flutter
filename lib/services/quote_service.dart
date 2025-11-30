@@ -57,5 +57,80 @@ class QuoteService {
       throw Exception('Failed to connect server: $e');
     }
   }
+
+  Future<Quote> createQuote({
+    required int bookId,
+    required String text,
+    required int page,
+  }) async {
+    final url = Uri.parse('$baseUrl/api/v1/quotes');
+    final token = await _getAccessToken();
+    
+    final requestBody = {
+      'bookId': bookId,
+      'text': text,
+      'page': page,
+    };
+    
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(requestBody),
+      );
+      
+      if (response.statusCode == 200) {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        
+        if (jsonMap['success'] == true && jsonMap['data'] != null) {
+          return Quote.fromJson(jsonMap['data']);
+        } else {
+          throw Exception(jsonMap['message'] ?? 'Failed to create quote');
+        }
+      } else {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        throw Exception(jsonMap['message'] ?? 'Failed to create quote');
+      }
+    } catch (e) {
+      throw Exception('Failed to connect server: $e');
+    }
+  }
+
+  Future<void> deleteQuote(int quoteId) async {
+    final url = Uri.parse('$baseUrl/api/v1/quotes/$quoteId');
+    final token = await _getAccessToken();
+    
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        
+        if (jsonMap['success'] != true) {
+          throw Exception(jsonMap['message'] ?? 'Failed to delete quote');
+        }
+      } else {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        throw Exception(jsonMap['message'] ?? 'Failed to delete quote');
+      }
+    } catch (e) {
+      throw Exception('Failed to connect server: $e');
+    }
+  }
 }
 

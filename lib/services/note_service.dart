@@ -57,5 +57,139 @@ class NoteService {
       throw Exception('Failed to connect server: $e');
     }
   }
+
+  Future<Note> createNote({
+    required int bookId,
+    required String title,
+    required String content,
+    String? html,
+    bool isImportant = false,
+    List<String> tagList = const [],
+  }) async {
+    final url = Uri.parse('$baseUrl/api/v1/notes');
+    final token = await _getAccessToken();
+    
+    final requestBody = {
+      'bookId': bookId,
+      'title': title,
+      'content': content,
+      'html': html ?? content, // html이 없으면 content와 동일하게 설정
+      'isImportant': isImportant,
+      'tagList': tagList,
+      'important': isImportant, // important와 isImportant 동일한 값
+    };
+    
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(requestBody),
+      );
+      
+      if (response.statusCode == 200) {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        
+        if (jsonMap['success'] == true && jsonMap['data'] != null) {
+          return Note.fromJson(jsonMap['data']);
+        } else {
+          throw Exception(jsonMap['message'] ?? 'Failed to create note');
+        }
+      } else {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        throw Exception(jsonMap['message'] ?? 'Failed to create note');
+      }
+    } catch (e) {
+      throw Exception('Failed to connect server: $e');
+    }
+  }
+
+  Future<void> deleteNote(int noteId) async {
+    final url = Uri.parse('$baseUrl/api/v1/notes/$noteId');
+    final token = await _getAccessToken();
+    
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        
+        if (jsonMap['success'] != true) {
+          throw Exception(jsonMap['message'] ?? 'Failed to delete note');
+        }
+      } else {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        throw Exception(jsonMap['message'] ?? 'Failed to delete note');
+      }
+    } catch (e) {
+      throw Exception('Failed to connect server: $e');
+    }
+  }
+
+  Future<Note> updateNote({
+    required int noteId,
+    required int bookId,
+    required String title,
+    required String content,
+    String? html,
+    bool isImportant = false,
+    List<String> tagList = const [],
+  }) async {
+    final url = Uri.parse('$baseUrl/api/v1/notes/$noteId');
+    final token = await _getAccessToken();
+    
+    final requestBody = {
+      'bookId': bookId,
+      'title': title,
+      'content': content,
+      'html': html ?? content,
+      'isImportant': isImportant,
+      'tagList': tagList,
+      'important': isImportant,
+    };
+    
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(requestBody),
+      );
+      
+      if (response.statusCode == 200) {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        
+        if (jsonMap['success'] == true && jsonMap['data'] != null) {
+          return Note.fromJson(jsonMap['data']);
+        } else {
+          throw Exception(jsonMap['message'] ?? 'Failed to update note');
+        }
+      } else {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final jsonMap = jsonDecode(decodedBody);
+        throw Exception(jsonMap['message'] ?? 'Failed to update note');
+      }
+    } catch (e) {
+      throw Exception('Failed to connect server: $e');
+    }
+  }
 }
 

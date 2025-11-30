@@ -6,6 +6,7 @@ class Quote {
   final String? comment;
   final List<String> tags;
   final DateTime createdAt;
+  final bool isImportant;
 
   Quote({
     required this.id,
@@ -15,6 +16,7 @@ class Quote {
     this.comment,
     this.tags = const [],
     required this.createdAt,
+    this.isImportant = false,
   });
 
   factory Quote.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class Quote {
       comment: json['memo'], // API의 'memo' 필드를 'comment'로 매핑
       tags: [], // API 스펙에 tags 필드가 없음
       createdAt: DateTime.now(), // API 스펙에 createdAt이 없음
+      isImportant: json['isImportant'] ?? false,
     );
   }
 }

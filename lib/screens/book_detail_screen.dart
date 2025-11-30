@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../models/book/book.dart';
 import '../models/book/book_detail_response.dart';
 import '../models/note/note.dart';
 import '../models/quote/quote.dart';
 import '../theme/app_theme.dart';
 import '../providers/book/book_providers.dart';
+import '../providers/note/note_providers.dart';
+import '../providers/quote/quote_providers.dart';
 
 class BookDetailScreen extends ConsumerStatefulWidget {
   final Book book;
@@ -77,6 +80,47 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         backgroundColor: AppTheme.surfaceWhite,
         elevation: 0,
       ),
+      floatingActionButton: fullDataAsync.when(
+        data: (data) {
+          final (bookDetail, notes, quotes) = data;
+          return FloatingActionButton(
+            onPressed: () async {
+              // 현재 선택된 탭에 따라 노트 또는 인용구 추가
+              if (_tabController.index == 0) {
+                // 노트 추가
+                final result = await context.push(
+                  '/book/${widget.book.id}/note/create',
+                  extra: bookDetail,
+                );
+                // 노트 저장 성공 시 Provider 무효화하여 데이터 새로고침
+                if (result == true) {
+                  ref.invalidate(notesForBookProvider(widget.book.id));
+                  ref.invalidate(bookFullDataProvider(widget.book.id));
+                }
+              } else {
+                // 인용구 추가
+                final result = await context.push(
+                  '/book/${widget.book.id}/quote/create',
+                  extra: bookDetail,
+                );
+                // 인용구 저장 성공 시 Provider 무효화하여 데이터 새로고침
+                if (result == true) {
+                  ref.invalidate(quotesForBookProvider(widget.book.id));
+                  ref.invalidate(bookFullDataProvider(widget.book.id));
+                }
+              }
+            },
+            backgroundColor: AppTheme.brandBlue,
+            child: const Icon(
+              Icons.add,
+              color: Colors.white,
+            ),
+          );
+        },
+        loading: () => const SizedBox.shrink(),
+        error: (err, stack) => const SizedBox.shrink(),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: fullDataAsync.when(
         data: (data) {
           // 레코드 구조분해 할당 (Destructuring)
@@ -129,14 +173,12 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-            // 책 정보 섹션
             Container(
               color: AppTheme.surfaceWhite,
               padding: const EdgeInsets.all(16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 책 커버 (왼쪽)
                   Container(
                     width: 100,
                     height: 150,
@@ -175,29 +217,47 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 카테고리 태그
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.brandLightTint,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            bookDetail.category,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.brandBlue,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        Text(
+                          bookDetail.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.headingDark,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        // 별점
+                        Text(
+                          bookDetail.author,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.bodyMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // 카테고리 태그와 별점을 한 줄에 배치
                         Row(
                           children: [
+                            // 카테고리 태그
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.brandLightTint,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                bookDetail.category,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.brandBlue,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // 별점
                             ...List.generate(5, (index) {
                               return Icon(
                                 Icons.star,
@@ -216,25 +276,61 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 12),
-                        // 책 제목
-                        Text(
-                          bookDetail.title,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.headingDark,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // 저자
-                        Text(
-                          bookDetail.author,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.bodyMedium,
-                          ),
+                        ),                       
+                        const SizedBox(height: 8),
+                        // 독서 진행률
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: bookDetail.progress / 100,
+                                      minHeight: 6,
+                                      backgroundColor: AppTheme.borderSubtle,
+                                      valueColor: const AlwaysStoppedAnimation<Color>(
+                                        AppTheme.brandBlue,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  '${bookDetail.progress.toInt()}%',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.headingDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '${bookDetail.currentPage} / ${bookDetail.totalPages} 페이지',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.bodyMedium,
+                                  ),
+                                ),
+                                Text(
+                                  bookDetail.updateDate != null
+                                      ? '마지막 읽음: ${_formatDateForDisplay(bookDetail.updateDate!)}'
+                                      : '',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.bodyMedium,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -248,35 +344,14 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
               color: AppTheme.surfaceWhite,
               child: Column(
                 children: [
-                  Stack(
-                    children: [
-                      TabBar(
-                        controller: _tabController,
-                        labelColor: AppTheme.brandBlue,
-                        unselectedLabelColor: AppTheme.bodyMedium,
-                        indicatorColor: AppTheme.brandBlue,
-                        tabs: [
-                          Tab(text: '노트 (${notes.length})'),
-                          Tab(text: '인용구 (${quotes.length})'),
-                        ],
-                      ),
-                      // FAB 버튼 (오른쪽)
-                      Positioned(
-                        right: 16,
-                        top: 8,
-                        child: FloatingActionButton(
-                          onPressed: () {
-                            // 노트 또는 인용구 추가 기능
-                          },
-                          backgroundColor: AppTheme.brandBlue,
-                          mini: true,
-                          child: const Icon(
-                            Icons.add,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                      ),
+                  TabBar(
+                    controller: _tabController,
+                    labelColor: AppTheme.brandBlue,
+                    unselectedLabelColor: AppTheme.bodyMedium,
+                    indicatorColor: AppTheme.brandBlue,
+                    tabs: [
+                      Tab(text: '노트 (${notes.length})'),
+                      Tab(text: '인용구 (${quotes.length})'),
                     ],
                   ),
                   SizedBox(
@@ -297,6 +372,9 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
     );
   }
 
+  String _formatDateForDisplay(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
 }
 
 // 최근 활동을 위한 간단한 클래스
@@ -465,15 +543,23 @@ class _NotesTab extends StatelessWidget {
       itemCount: notes.length,
       itemBuilder: (context, index) {
         final note = notes[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceWhite,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.divider, width: 1),
-          ),
-          child: Column(
+        return InkWell(
+          onTap: () {
+            context.push(
+              '/book/${note.bookId}/note/${note.id}',
+              extra: note,
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.divider, width: 1),
+            ),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -553,6 +639,7 @@ class _NotesTab extends StatelessWidget {
               ),
             ],
           ),
+          ),
         );
       },
     );
@@ -584,15 +671,23 @@ class _QuotesTab extends StatelessWidget {
       itemCount: quotes.length,
       itemBuilder: (context, index) {
         final quote = quotes[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceWhite,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.divider, width: 1),
-          ),
-          child: Column(
+        return InkWell(
+          onTap: () {
+            context.push(
+              '/book/${quote.bookId}/quote/${quote.id}',
+              extra: quote,
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.divider, width: 1),
+            ),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -675,6 +770,7 @@ class _QuotesTab extends StatelessWidget {
               ),
             ],
           ),
+        ),
         );
       },
     );

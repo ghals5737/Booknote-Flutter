@@ -8,9 +8,17 @@ import '../screens/search_screen.dart';
 import '../screens/review_screen.dart';
 import '../screens/statistics_screen.dart';
 import '../screens/book_detail_screen.dart';
+import '../screens/create_note_screen.dart';
+import '../screens/create_quote_screen.dart';
+import '../screens/note_detail_screen.dart';
+import '../screens/edit_note_screen.dart';
+import '../screens/quote_detail_screen.dart';
 import '../providers/auth/auth_providers.dart';
 import '../models/auth/user.dart';
 import '../models/book/book.dart';
+import '../models/book/book_detail_response.dart';
+import '../models/note/note.dart';
+import '../models/quote/quote.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../theme/app_theme.dart';
 
@@ -70,6 +78,86 @@ final routerProvider = Provider<GoRouter>((ref) {
               }
               return BookDetailScreen(book: book);
             },
+            routes: [
+              // 노트 작성 화면
+              GoRoute(
+                path: 'note/create',
+                name: 'createNote',
+                builder: (context, state) {
+                  final bookDetail = state.extra as BookDetailData?;
+                  if (bookDetail == null) {
+                    // bookDetail이 없으면 이전 화면으로 돌아가기
+                    return const Scaffold(
+                      body: Center(child: Text('책 정보를 불러올 수 없습니다')),
+                    );
+                  }
+                  return CreateNoteScreen(bookDetail: bookDetail);
+                },
+              ),
+              // 인용구 추가 화면
+              GoRoute(
+                path: 'quote/create',
+                name: 'createQuote',
+                builder: (context, state) {
+                  final bookDetail = state.extra as BookDetailData?;
+                  if (bookDetail == null) {
+                    // bookDetail이 없으면 이전 화면으로 돌아가기
+                    return const Scaffold(
+                      body: Center(child: Text('책 정보를 불러올 수 없습니다')),
+                    );
+                  }
+                  return CreateQuoteScreen(bookDetail: bookDetail);
+                },
+              ),
+              // 노트 상세 화면
+              GoRoute(
+                path: 'note/:noteId',
+                name: 'noteDetail',
+                builder: (context, state) {
+                  final note = state.extra as Note?;
+                  final bookId = int.parse(state.pathParameters['bookId']!);
+                  if (note == null) {
+                    return const Scaffold(
+                      body: Center(child: Text('노트 정보를 불러올 수 없습니다')),
+                    );
+                  }
+                  return NoteDetailScreen(note: note, bookId: bookId);
+                },
+                routes: [
+                  // 노트 수정 화면
+                  GoRoute(
+                    path: 'edit',
+                    name: 'editNote',
+                    builder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>?;
+                      if (extra == null) {
+                        return const Scaffold(
+                          body: Center(child: Text('노트 정보를 불러올 수 없습니다')),
+                        );
+                      }
+                      final note = extra['note'] as Note;
+                      final bookDetail = extra['bookDetail'] as BookDetailData;
+                      return EditNoteScreen(note: note, bookDetail: bookDetail);
+                    },
+                  ),
+                ],
+              ),
+              // 인용구 상세 화면
+              GoRoute(
+                path: 'quote/:quoteId',
+                name: 'quoteDetail',
+                builder: (context, state) {
+                  final quote = state.extra as Quote?;
+                  final bookId = int.parse(state.pathParameters['bookId']!);
+                  if (quote == null) {
+                    return const Scaffold(
+                      body: Center(child: Text('인용구 정보를 불러올 수 없습니다')),
+                    );
+                  }
+                  return QuoteDetailScreen(quote: quote, bookId: bookId);
+                },
+              ),
+            ],
           ),
         ],
       ),
