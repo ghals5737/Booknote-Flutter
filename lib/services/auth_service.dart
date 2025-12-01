@@ -1,10 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/auth/auth_response.dart';
 
 /// 인증 API 서비스
 class AuthService {
-  static const String baseUrl = 'http://10.0.2.2:9500';
+  /// 환경변수에서 Base URL 가져오기
+  String get baseUrl {
+    return dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:9500';
+  }
 
   /// 로그인 API 호출
   Future<AuthResponse> login(String email, String password) async {

@@ -3,9 +3,13 @@ import 'package:http/http.dart' as http;
 import '../models/note/note.dart';
 import '../models/note/note_response.dart';
 import '../utils/token_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class NoteService {
-  final String baseUrl = 'http://10.0.2.2:9500';
+  /// 환경변수에서 Base URL 가져오기
+  String get baseUrl {
+    return dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:9500';
+  }
 
   Future<String?> _getAccessToken() async {
     return await TokenStorage.getAccessToken();

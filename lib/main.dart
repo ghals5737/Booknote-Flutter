@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'theme/app_theme.dart';
 import 'router/app_router.dart';
 import 'providers/auth/auth_providers.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // .env 파일 로드
+  await dotenv.load(fileName: '.env');
+  
   runApp(
     const ProviderScope(
       child: MyApp(),
