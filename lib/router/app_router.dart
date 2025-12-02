@@ -1,9 +1,8 @@
+import 'package:booknoteflutter/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../screens/auth/auth_screen.dart';
-import '../screens/dashboard_screen.dart';
-import '../screens/library_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/review_screen.dart';
 import '../screens/statistics_screen.dart';
@@ -13,13 +12,14 @@ import '../screens/create_quote_screen.dart';
 import '../screens/note_detail_screen.dart';
 import '../screens/edit_note_screen.dart';
 import '../screens/quote_detail_screen.dart';
+import '../screens/add_book_screen.dart';
 import '../providers/auth/auth_providers.dart';
 import '../models/auth/user.dart';
 import '../models/book/book.dart';
 import '../models/book/book_detail_response.dart';
 import '../models/note/note.dart';
 import '../models/quote/quote.dart';
-import '../widgets/bottom_nav_bar.dart';
+import '../widgets/custom_bottom_nav_bar.dart';
 import '../theme/app_theme.dart';
 
 /// 앱 라우터 설정
@@ -51,15 +51,40 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'auth',
         builder: (context, state) => const AuthScreen(),
       ),
-      // 메인 화면 (하단 네비게이션 포함)
-      GoRoute(
-        path: '/',
-        name: 'home',
-        builder: (context, state) => const MainScreen(),
+      // 메인 화면 (하단 네비게이션 포함) - ShellRoute로 변경
+      ShellRoute(
+        builder: (context, state, child) => MainScreen(child: child),
         routes: [
+          // 홈 화면들
+          GoRoute(
+            path: '/',
+            name: 'home',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/search',
+            name: 'search',
+            builder: (context, state) => const SearchScreen(),
+          ),
+          GoRoute(
+            path: '/review',
+            name: 'review',
+            builder: (context, state) => const ReviewScreen(),
+          ),
+          GoRoute(
+            path: '/statistics',
+            name: 'statistics',
+            builder: (context, state) => const StatisticsScreen(),
+          ),
+          // 책 추가 화면
+          GoRoute(
+            path: '/book/add',
+            name: 'addBook',
+            builder: (context, state) => const AddBookScreen(),
+          ),
           // 책 상세 화면
           GoRoute(
-            path: 'book/:bookId',
+            path: '/book/:bookId',
             name: 'bookDetail',
             builder: (context, state) {
               final book = state.extra as Book?;
@@ -86,7 +111,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) {
                   final bookDetail = state.extra as BookDetailData?;
                   if (bookDetail == null) {
-                    // bookDetail이 없으면 이전 화면으로 돌아가기
                     return const Scaffold(
                       body: Center(child: Text('책 정보를 불러올 수 없습니다')),
                     );
@@ -101,7 +125,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) {
                   final bookDetail = state.extra as BookDetailData?;
                   if (bookDetail == null) {
-                    // bookDetail이 없으면 이전 화면으로 돌아가기
                     return const Scaffold(
                       body: Center(child: Text('책 정보를 불러올 수 없습니다')),
                     );
@@ -165,37 +188,60 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// 메인 화면 (하단 네비게이션 포함)
+/// 메인 화면 (하단 네비게이션 포함) - ShellRoute용
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final Widget child;
+
+  const MainScreen({
+    super.key,
+    required this.child,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  int _getCurrentIndex(String location) {
+    if (location == '/' || location.startsWith('/book/add')) return 0; // 서재
+    if (location.startsWith('/search')) return 1; // 검색
+    if (location.startsWith('/review')) return 3; // 복습
+    if (location.startsWith('/statistics')) return 4; // 통계
+    // 책 상세, 노트 상세, 인용구 상세 등은 현재 인덱스 유지 (변경하지 않음)
+    return 0; // 기본값: 서재
+  }
 
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const LibraryScreen(),
-    const SearchScreen(),
-    const ReviewScreen(),
-    const StatisticsScreen(),
-  ];
+  void _handleNavTap(int index, BuildContext context) {
+    final router = GoRouter.of(context);
+    switch (index) {
+      case 0:
+        router.go('/');
+        break;
+      case 1:
+        router.go('/search');
+        break;
+      case 3:
+        router.go('/review');
+        break;
+      case 4:
+        router.go('/statistics');
+        break;
+      default:
+        router.go('/');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    final currentIndex = _getCurrentIndex(location);
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundCanvas,
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+      body: widget.child,
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: currentIndex,
+        onTap: (index) => _handleNavTap(index, context),
       ),
     );
   }

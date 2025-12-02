@@ -80,47 +80,6 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen>
         backgroundColor: AppTheme.surfaceWhite,
         elevation: 0,
       ),
-      floatingActionButton: fullDataAsync.when(
-        data: (data) {
-          final (bookDetail, notes, quotes) = data;
-          return FloatingActionButton(
-            onPressed: () async {
-              // 현재 선택된 탭에 따라 노트 또는 인용구 추가
-              if (_tabController.index == 0) {
-                // 노트 추가
-                final result = await context.push(
-                  '/book/${widget.book.id}/note/create',
-                  extra: bookDetail,
-                );
-                // 노트 저장 성공 시 Provider 무효화하여 데이터 새로고침
-                if (result == true) {
-                  ref.invalidate(notesForBookProvider(widget.book.id));
-                  ref.invalidate(bookFullDataProvider(widget.book.id));
-                }
-              } else {
-                // 인용구 추가
-                final result = await context.push(
-                  '/book/${widget.book.id}/quote/create',
-                  extra: bookDetail,
-                );
-                // 인용구 저장 성공 시 Provider 무효화하여 데이터 새로고침
-                if (result == true) {
-                  ref.invalidate(quotesForBookProvider(widget.book.id));
-                  ref.invalidate(bookFullDataProvider(widget.book.id));
-                }
-              }
-            },
-            backgroundColor: AppTheme.brandBlue,
-            child: const Icon(
-              Icons.add,
-              color: Colors.white,
-            ),
-          );
-        },
-        loading: () => const SizedBox.shrink(),
-        error: (err, stack) => const SizedBox.shrink(),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: fullDataAsync.when(
         data: (data) {
           // 레코드 구조분해 할당 (Destructuring)
