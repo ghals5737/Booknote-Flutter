@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../models/book/book_search_response.dart';
 import '../providers/book/book_providers.dart';
@@ -144,7 +143,7 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        context.pop(true);
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -175,46 +174,67 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundCanvas,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppTheme.brandBlue,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.book,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Booknote',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-        backgroundColor: AppTheme.surfaceWhite,
-        elevation: 0,
       ),
-      body: Form(
+      child: Form(
         key: _formKey,
         child: Column(
           children: [
+            // 모달 헤더
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceWhite,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppTheme.divider,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      '취소',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.metaLight,
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    '새 책 추가',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.headingDark,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _canAddBook() ? _addBook : null,
+                    child: Text(
+                      '완료',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: _canAddBook()
+                            ? AppTheme.brandBlue
+                            : AppTheme.metaLight,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
@@ -222,16 +242,7 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 헤더
-                      const Text(
-                        '새 책 추가',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.headingDark,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                      // 설명 텍스트
                       Text(
                         '읽고 싶은 책이나 읽고 있는 책을 추가해보세요.',
                         style: TextStyle(
@@ -904,55 +915,6 @@ class _AddBookScreenState extends ConsumerState<AddBookScreen> {
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-            ),
-            
-            // 하단 버튼
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceWhite,
-                border: Border(
-                  top: BorderSide(
-                    color: AppTheme.divider,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: SafeArea(
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                    child: ElevatedButton(
-                    onPressed: _canAddBook() ? _addBook : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _canAddBook()
-                          ? AppTheme.brandBlue
-                          : AppTheme.metaLight,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            '책 추가하기',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
                   ),
                 ),
               ),

@@ -83,66 +83,82 @@ class _CreateQuoteScreenState extends ConsumerState<CreateQuoteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundCanvas,
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppTheme.brandBlue,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.book,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Booknote',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
-        centerTitle: true,
-        backgroundColor: AppTheme.surfaceWhite,
-        elevation: 0,
       ),
-      body: Form(
+      child: Form(
         key: _formKey,
         child: Column(
           children: [
+            // 모달 헤더
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceWhite,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppTheme.divider,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      '취소',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.metaLight,
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    '새 인용구 추가',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.headingDark,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: (_canSave() && !_isSaving) ? _saveQuote : null,
+                    child: Text(
+                      '완료',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: (_canSave() && !_isSaving)
+                            ? AppTheme.brandBlue
+                            : AppTheme.metaLight,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-              // 헤더
-              const Text(
-                '새 인용구 추가',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.headingDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${widget.bookDetail.title}에서 인상 깊은 구절을 기록해보세요',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.bodyMedium,
-                ),
-              ),
-              const SizedBox(height: 24),
+                    // 설명 텍스트
+                    Text(
+                      '${widget.bookDetail.title}에서 인상 깊은 구절을 기록해보세요',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.metaLight,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
               // 책 정보 카드
               Container(
                 padding: const EdgeInsets.all(16),
@@ -506,94 +522,9 @@ class _CreateQuoteScreenState extends ConsumerState<CreateQuoteScreen> {
                   ],
                 ),
               ),
-                    const SizedBox(height: 100), // 하단 버튼 공간 확보
+                    const SizedBox(height: 32), // 하단 여백
                   ],
                 ),
-              ),
-            ),
-            // 하단 액션 버튼
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceWhite,
-                border: Border(
-                  top: BorderSide(
-                    color: AppTheme.divider,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  if (!_canSave())
-                    Expanded(
-                      child: Text(
-                        '인용구 내용과 페이지 번호를 입력해 주세요',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.metaLight,
-                        ),
-                      ),
-                    )
-                  else
-                    const SizedBox.shrink(),
-                  const SizedBox(width: 16),
-                  // 취소 버튼
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.borderSubtle),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      '취소',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.bodyMedium,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // 인용구 저장 버튼
-                  ElevatedButton(
-                    onPressed: (_canSave() && !_isSaving) ? _saveQuote : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.brandBlue,
-                      disabledBackgroundColor: AppTheme.borderSubtle,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            '인용구 저장',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ],
               ),
             ),
           ],

@@ -112,42 +112,67 @@ class _CreateNoteScreenState extends ConsumerState<CreateNoteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundCanvas,
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppTheme.brandBlue,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.book,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Booknote',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
-        centerTitle: true,
-        backgroundColor: AppTheme.surfaceWhite,
-        elevation: 0,
       ),
-      body: Form(
+      child: Form(
         key: _formKey,
         child: Column(
           children: [
+            // 모달 헤더
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceWhite,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppTheme.divider,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      '취소',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppTheme.metaLight,
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    '새 노트 작성',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.headingDark,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: (_canSave() && !_isSaving) ? _saveNote : null,
+                    child: Text(
+                      '완료',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: (_canSave() && !_isSaving)
+                            ? AppTheme.brandBlue
+                            : AppTheme.metaLight,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
@@ -253,20 +278,11 @@ class _CreateNoteScreenState extends ConsumerState<CreateNoteScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      // 새 노트 작성 헤더
+                      const SizedBox(height: 16),
+                      // 중요 버튼
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          const Text(
-                            '새 노트 작성',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.headingDark,
-                            ),
-                          ),
-                          // 중요 버튼
                           TextButton.icon(
                             onPressed: () {
                               setState(() {
@@ -302,7 +318,7 @@ class _CreateNoteScreenState extends ConsumerState<CreateNoteScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       // 노트 제목 입력
                       TextFormField(
                         controller: _titleController,
@@ -600,95 +616,10 @@ class _CreateNoteScreenState extends ConsumerState<CreateNoteScreen> {
                           }).toList(),
                         ),
                       ],
-                      const SizedBox(height: 100), // 하단 버튼 공간 확보
+                      const SizedBox(height: 32), // 하단 여백
                     ],
                   ),
                 ),
-              ),
-            ),
-            // 하단 액션 버튼
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceWhite,
-                border: Border(
-                  top: BorderSide(
-                    color: AppTheme.divider,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  if (!_canSave())
-                    Expanded(
-                      child: Text(
-                        '제목과 내용을 입력해 주세요',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.metaLight,
-                        ),
-                      ),
-                    )
-                  else
-                    const SizedBox.shrink(),
-                  const SizedBox(width: 16),
-                  // 취소 버튼
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.borderSubtle),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      '취소',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.bodyMedium,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // 노트 저장 버튼
-                  ElevatedButton(
-                    onPressed: (_canSave() && !_isSaving) ? _saveNote : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.brandBlue,
-                      disabledBackgroundColor: AppTheme.borderSubtle,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            '노트 저장',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ],
               ),
             ),
           ],
