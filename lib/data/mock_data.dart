@@ -2,6 +2,7 @@ import '../models/book/book.dart';
 import '../models/category.dart';
 import '../models/note/note.dart';
 import '../models/quote/quote.dart';
+import '../models/review/review_item.dart';
 
 class MockData {
   static List<Book> getBooks() {
@@ -146,5 +147,64 @@ class _Activity {
     required this.page,
     required this.createdAt,
   });
+}
+
+// 복습 항목 목록
+extension MockReviewData on MockData {
+  static List<ReviewItem> getReviewItems() {
+    final notes = MockData.getNotesForBook(1);
+    final quotes = MockData.getQuotesForBook(1);
+    final items = <ReviewItem>[];
+
+    // 노트를 복습 항목으로 변환
+    if (notes.isNotEmpty) {
+      items.add(ReviewItem(
+        id: 'note-${notes[0].id}',
+        isNote: true,
+        note: notes[0],
+        bookTitle: '아토믹 해빗',
+        category: '아토믹 해빗',
+        priority: '높음',
+        reviewCount: 3,
+        lastReviewDate: DateTime.parse('2024-01-10'),
+      ));
+    }
+
+    // 인용구를 복습 항목으로 변환
+    if (quotes.isNotEmpty) {
+      items.add(ReviewItem(
+        id: 'quote-${quotes[0].id}',
+        isNote: false,
+        quote: quotes[0],
+        bookTitle: '아토믹 해빗',
+        category: '아토믹 해빗',
+        priority: '높음',
+        reviewCount: 5,
+        lastReviewDate: DateTime.parse('2024-01-11'),
+      ));
+    }
+
+    // 추가 노트 (클린 코드)
+    items.add(ReviewItem(
+      id: 'note-3',
+      isNote: true,
+      note: Note(
+        id: 3,
+        bookId: 2,
+        title: '클린 코드의 원칙',
+        content: '코드는 읽기 쉽고 이해하기 쉬워야 한다. 의미 있는 이름을 사용하고, 함수는 한 가지 일만 해야 한다.',
+        page: 45,
+        tags: ['코드', '원칙'],
+        createdAt: DateTime.parse('2024-01-12T10:00:00Z'),
+      ),
+      bookTitle: '클린 코드',
+      category: '클린 코드',
+      priority: '보통',
+      reviewCount: 2,
+      lastReviewDate: DateTime.parse('2024-01-12'),
+    ));
+
+    return items;
+  }
 }
 

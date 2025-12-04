@@ -161,13 +161,13 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           right: 0,
           // 수직 정중앙: 네비게이션 바 높이(70)의 절반에서 FAB 높이(60)의 절반을 뺌
           // top: -30은 네비게이션 바 위로 30px 올라가서 FAB의 절반이 위로 나오게 함
-          top: 15,
+          top: 10,
           child: Center(
             child: GestureDetector(
               onTap: _handleFabTap,
               child: Container(
-                width: 40,
-                height: 40,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: AppTheme.brandBlue,
                   shape: BoxShape.circle,
@@ -182,7 +182,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
                 child: Icon(
                   _showFabMenu ? Icons.close : Icons.add,
                   color: Colors.white,
-                  size: 32,
+                  size: 28,
                 ),
               ),
             ),
