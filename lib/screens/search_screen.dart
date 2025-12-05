@@ -77,16 +77,33 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundCanvas,
       appBar: AppBar(
-        title: const Text(
-          '검색',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.headingDark,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppTheme.brandBlue,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.book,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Booknote',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
+        centerTitle: true,
         backgroundColor: AppTheme.surfaceWhite,
-        elevation: 0,
       ),
       body: Column(
         children: [
