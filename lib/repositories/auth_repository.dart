@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/auth/user.dart';
 import '../services/auth_service.dart';
@@ -110,8 +111,25 @@ class ApiAuthRepository implements AuthRepository {
       // Google Sign In 싱글톤 인스턴스 가져오기
       final GoogleSignIn googleSignIn = GoogleSignIn.instance;
       
+      // 플랫폼별 클라이언트 ID 설정
+      String? clientId;
+      String? serverClientId;
+      
+      if (Platform.isAndroid) {
+        // Android 클라이언트 ID
+        clientId = '637524626837-25asfbrp53runevs90voh1ce85hoo9o8.apps.googleusercontent.com';
+        // Android에서는 serverClientId도 필요 (웹 클라이언트 ID가 없으므로 동일한 값 사용)
+        serverClientId = clientId;
+      } else if (Platform.isIOS) {
+        // iOS 클라이언트 ID
+        clientId = '637524626837-ioul023udsn8f6v42gvbbehp42hifjl3.apps.googleusercontent.com';
+      }
+      
       // 초기화 (한 번만 호출, scopes는 authenticate에서 설정)
-      await googleSignIn.initialize();
+      await googleSignIn.initialize(
+        clientId: clientId,
+        serverClientId: serverClientId,
+      );
 
       // 구글 로그인 실행
       final GoogleSignInAccount googleUser = await googleSignIn.authenticate(
@@ -155,6 +173,18 @@ class ApiAuthRepository implements AuthRepository {
       }
     } catch (e) {
       if (e is Exception) {
+        // GoogleSignInException의 경우 더 명확한 메시지 제공
+        final errorMessage = e.toString();
+        if (errorMessage.contains('Developer console is not set up correctly') ||
+            errorMessage.contains('unknownError')) {
+          throw Exception(
+            '구글 로그인 설정이 올바르지 않습니다.\n'
+            'Google Cloud Console에서 다음을 확인해주세요:\n'
+            '1. SHA-1 인증서 지문 등록 (디버그: 96:52:86:F6:25:F8:40:AE:C5:FB:FE:FF:3B:37:7C:89:69:D6:5C:6D)\n'
+            '2. Android OAuth 클라이언트 ID 확인\n'
+            '3. 패키지 이름 확인: com.example.booknoteflutter',
+          );
+        }
         rethrow;
       }
       throw Exception('구글 로그인 중 오류가 발생했습니다: $e');
