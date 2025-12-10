@@ -38,5 +38,41 @@ class AuthService {
       throw Exception('네트워크 오류가 발생했습니다: $e');
     }
   }
+
+  /// 구글 로그인 API 호출
+  Future<AuthResponse> loginWithGoogle({
+    required String email,
+    required String name,
+    required String googleId,
+    String? profileImage,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/v1/auth/google'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'name': name,
+          'googleId': googleId,
+          if (profileImage != null) 'profileImage': profileImage,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        return AuthResponse.fromJson(jsonData);
+      } else {
+        final errorData = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(errorData['message'] ?? '구글 로그인에 실패했습니다.');
+      }
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('네트워크 오류가 발생했습니다: $e');
+    }
+  }
 }
 

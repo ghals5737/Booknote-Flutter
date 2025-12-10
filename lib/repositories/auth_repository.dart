@@ -1,3 +1,4 @@
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/auth/user.dart';
 import '../services/auth_service.dart';
 import '../utils/token_storage.dart';
@@ -105,15 +106,59 @@ class ApiAuthRepository implements AuthRepository {
 
   @override
   Future<User> loginWithGoogle() async {
-    await Future.delayed(const Duration(seconds: 1));
-    _currentUser = User(
-      id: 'google_user_${DateTime.now().millisecondsSinceEpoch}',
-      email: 'user@gmail.com',
-      name: 'Google User',
-      isGuest: false,
-    );
-    _isAuthenticated = true;
-    return _currentUser!;
+    try {
+      // Google Sign In 싱글톤 인스턴스 가져오기
+      final GoogleSignIn googleSignIn = GoogleSignIn.instance;
+      
+      // 초기화 (한 번만 호출, scopes는 authenticate에서 설정)
+      await googleSignIn.initialize();
+
+      // 구글 로그인 실행
+      final GoogleSignInAccount googleUser = await googleSignIn.authenticate(
+        scopeHint: ['email', 'profile'],
+      );
+
+      // 백엔드 API 호출
+      final response = await _authService.loginWithGoogle(
+        email: googleUser.email,
+        name: googleUser.displayName ?? 'Google User',
+        googleId: googleUser.id,
+        profileImage: googleUser.photoUrl,
+      );
+
+      if (response.success && response.data != null) {
+        // 토큰 저장
+        await TokenStorage.saveAccessToken(response.data!.accessToken);
+        await TokenStorage.saveRefreshToken(response.data!.refreshToken);
+
+        // 사용자 정보 저장
+        await TokenStorage.saveUserInfo(
+          id: googleUser.id,
+          email: googleUser.email,
+          name: googleUser.displayName ?? 'Google User',
+        );
+
+        // 현재 사용자 설정
+        _currentUser = User(
+          id: googleUser.id,
+          email: googleUser.email,
+          name: googleUser.displayName ?? 'Google User',
+          isGuest: false,
+        );
+        _isAuthenticated = true;
+
+        return _currentUser!;
+      } else {
+        throw Exception(response.message.isNotEmpty 
+            ? response.message 
+            : '구글 로그인에 실패했습니다.');
+      }
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('구글 로그인 중 오류가 발생했습니다: $e');
+    }
   }
 
   @override
