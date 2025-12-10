@@ -93,6 +93,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         centerTitle: true,
         backgroundColor: AppTheme.surfaceWhite,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.person_outline,
+              color: AppTheme.headingDark,
+            ),
+            onPressed: () {
+              context.push('/profile');
+            },
+          ),
+        ],
       ),
      body: SafeArea(
         child: SingleChildScrollView(

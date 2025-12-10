@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../models/review/review_item.dart';
 import '../data/mock_data.dart';
@@ -14,7 +15,8 @@ class ReviewScreen extends ConsumerStatefulWidget {
 
 class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   int _currentIndex = 0; // 현재 복습 중인 항목 인덱스
-  bool _isDetailMode = false; // 상세 모드 여부
+  bool _isReminderMode = false; // 리마인더 모드 여부 (false = 리스트 모드)
+  bool _showContent = false; // 리마인더 모드에서 내용 표시 여부
   List<ReviewItem> _reviewItems = [];
 
   @override
@@ -29,18 +31,27 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     });
   }
 
+  void _toggleViewMode() {
+    setState(() {
+      _isReminderMode = !_isReminderMode;
+      _currentIndex = 0;
+      _showContent = false;
+    });
+  }
 
   void _completeReview() {
     // 복습 완료 처리
     if (_currentIndex < _reviewItems.length - 1) {
       setState(() {
         _currentIndex++;
+        _showContent = false;
       });
     } else {
       // 모든 복습 완료
       setState(() {
-        _isDetailMode = false;
+        _isReminderMode = false;
         _currentIndex = 0;
+        _showContent = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -55,6 +66,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     if (_currentIndex > 0) {
       setState(() {
         _currentIndex--;
+        _showContent = false;
       });
     }
   }
@@ -63,25 +75,26 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     if (_currentIndex < _reviewItems.length - 1) {
       setState(() {
         _currentIndex++;
+        _showContent = false;
       });
     }
   }
 
-  void _exitDetailMode() {
+  void _toggleContent() {
     setState(() {
-      _isDetailMode = false;
+      _showContent = !_showContent;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isDetailMode && _reviewItems.isNotEmpty) {
-      return _buildDetailView();
+    if (_isReminderMode && _reviewItems.isNotEmpty) {
+      return _buildReminderView();
     }
     return _buildListView();
   }
 
-  /// 목록 뷰
+  /// 리스트 뷰
   Widget _buildListView() {
     return Scaffold(
       backgroundColor: AppTheme.backgroundCanvas,
@@ -113,29 +126,29 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         ),
         centerTitle: true,
         backgroundColor: AppTheme.surfaceWhite,
-         elevation: 0,
+        elevation: 0,
         actions: [
+          // 보기 모드 변경 버튼
           IconButton(
             icon: Icon(
-              Icons.view_module,
-              color: AppTheme.metaLight,
+              _isReminderMode ? Icons.list : Icons.view_module,
+              color: AppTheme.headingDark,
             ),
-            onPressed: () {
-              // 보기 모드 변경 (현재는 미구현)
-            },
+            onPressed: _toggleViewMode,
+            tooltip: _isReminderMode ? '리스트 모드' : '리마인더 모드',
           ),
+          // 프로필 버튼 (마지막)
           IconButton(
-            icon: Icon(
-              Icons.list,
-              color: AppTheme.metaLight,
+            icon: const Icon(
+              Icons.person_outline,
+              color: AppTheme.headingDark,
             ),
             onPressed: () {
-              // 필터/정렬 (현재는 미구현)
+              context.push('/profile');
             },
           ),
         ],
       ),
-      
       body: _reviewItems.isEmpty
           ? Center(
               child: Column(
@@ -168,13 +181,14 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
-  /// 복습 카드
+  /// 복습 카드 (리스트 모드)
   Widget _buildReviewCard(ReviewItem item, int index) {
     return InkWell(
       onTap: () {
         setState(() {
-          _isDetailMode = true;
+          _isReminderMode = true;
           _currentIndex = index;
+          _showContent = false;
         });
       },
       borderRadius: BorderRadius.circular(12),
@@ -185,7 +199,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           color: AppTheme.surfaceWhite,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.divider,
+            color: AppTheme.borderSubtle,
             width: 1,
           ),
         ),
@@ -207,16 +221,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            // 카테고리
+            // 책 제목
             Text(
-              item.category,
+              item.bookTitle,
               style: TextStyle(
                 fontSize: 14,
                 color: AppTheme.metaLight,
               ),
             ),
             const SizedBox(height: 8),
-            // 제목
+            // 제목 (노트) 또는 인용구 텍스트
             Text(
               item.isNote ? item.title : item.text,
               style: const TextStyle(
@@ -267,12 +281,17 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               ),
             const SizedBox(height: 12),
             // 마지막 복습 날짜
-            Text(
-              '마지막 복습: ${_formatDate(item.lastReviewDate)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.metaLight,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '마지막 복습: ${_formatDate(item.lastReviewDate)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.metaLight,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -291,7 +310,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         textColor = Colors.white;
         break;
       case '보통':
-        backgroundColor = const Color(0xFF51CF66);
+        backgroundColor = const Color(0xFFFFD93D);
         textColor = Colors.white;
         break;
       default:
@@ -316,8 +335,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
-  /// 상세 뷰
-  Widget _buildDetailView() {
+  /// 리마인더 뷰
+  Widget _buildReminderView() {
     if (_reviewItems.isEmpty) return const SizedBox.shrink();
 
     final item = _reviewItems[_currentIndex];
@@ -330,7 +349,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: _exitDetailMode,
+          onPressed: () {
+            setState(() {
+              _isReminderMode = false;
+              _currentIndex = 0;
+              _showContent = false;
+            });
+          },
         ),
         title: const Text(
           '복습',
@@ -343,19 +368,24 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         backgroundColor: AppTheme.surfaceWhite,
         elevation: 0,
         actions: [
+          // 보기 모드 변경 버튼
           IconButton(
             icon: Icon(
-              Icons.view_module,
-              color: AppTheme.metaLight,
+              _isReminderMode ? Icons.list : Icons.view_module,
+              color: AppTheme.headingDark,
             ),
-            onPressed: () {},
+            onPressed: _toggleViewMode,
+            tooltip: _isReminderMode ? '리스트 모드' : '리마인더 모드',
           ),
+          // 프로필 버튼 (마지막)
           IconButton(
-            icon: Icon(
-              Icons.list,
-              color: AppTheme.metaLight,
+            icon: const Icon(
+              Icons.person_outline,
+              color: AppTheme.headingDark,
             ),
-            onPressed: () {},
+            onPressed: () {
+              context.push('/profile');
+            },
           ),
         ],
       ),
@@ -363,7 +393,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         children: [
           // 진행률 표시
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             color: AppTheme.surfaceWhite,
             child: Row(
               children: [
@@ -401,128 +431,136 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           ),
           // 메인 카드
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceWhite,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppTheme.divider,
-                    width: 1,
+            child: GestureDetector(
+              onTap: _toggleContent,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceWhite,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppTheme.borderSubtle,
+                      width: 1,
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 우선순위 태그
-                    _buildPriorityTag(item.priority),
-                    const SizedBox(height: 16),
-                    // 복습 횟수
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        '복습 ${item.reviewCount}회',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.metaLight,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 우선순위 태그
+                      _buildPriorityTag(item.priority),
+                      const SizedBox(height: 16),
+                      // 복습 횟수
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '복습 ${item.reviewCount}회',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.metaLight,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    // 아이콘 (노트 또는 인용구)
-                    Center(
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: item.isNote
-                              ? AppTheme.brandLightTint
-                              : const Color(0xFFE0E7FF),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          item.isNote ? Icons.note : Icons.format_quote,
-                          size: 40,
-                          color: item.isNote
-                              ? AppTheme.brandBlue
-                              : const Color(0xFF8B5CF6),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // 책 제목
-                    Center(
-                      child: Text(
-                        item.bookTitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.metaLight,
+                      const SizedBox(height: 24),
+                      // 아이콘 (노트 또는 인용구)
+                      Center(
+                        child: Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: item.isNote
+                                ? AppTheme.brandLightTint
+                                : const Color(0xFFE0E7FF),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            item.isNote ? Icons.note : Icons.format_quote,
+                            size: 32,
+                            color: item.isNote
+                                ? AppTheme.brandBlue
+                                : const Color(0xFF8B5CF6),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    // 제목 (노트) 또는 인용구 텍스트
-                    Center(
-                      child: Text(
-                        item.isNote ? item.title : item.text,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.headingDark,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // 내용 (노트인 경우)
-                    if (item.isNote && item.content.isNotEmpty)
+                      const SizedBox(height: 24),
+                      // 책 제목
                       Center(
                         child: Text(
-                          item.content,
+                          item.bookTitle,
                           style: TextStyle(
                             fontSize: 14,
-                            color: AppTheme.bodyMedium,
-                            height: 1.5,
+                            color: AppTheme.metaLight,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // 제목 (노트) 또는 인용구 텍스트
+                      Center(
+                        child: Text(
+                          item.isNote ? item.title : item.text,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.headingDark,
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
-                    const SizedBox(height: 24),
-                    // 탭하여 내용 보기
-                    Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            '탭하여 내용 보기',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.metaLight,
+                      const SizedBox(height: 24),
+                      // 내용 표시 (탭했을 때)
+                      if (_showContent) ...[
+                        if (item.isNote && item.content.isNotEmpty)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                item.content,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.bodyMedium,
+                                  height: 1.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Icon(
-                            Icons.keyboard_arrow_down,
-                            color: AppTheme.metaLight,
+                      ] else ...[
+                        // 탭하여 내용 보기 안내
+                        Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                '탭하여 내용 보기',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.metaLight,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                color: AppTheme.metaLight,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
           // 하단 버튼
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: AppTheme.surfaceWhite,
               border: Border(
                 top: BorderSide(
-                  color: AppTheme.divider,
+                  color: AppTheme.borderSubtle,
                   width: 1,
                 ),
               ),
@@ -592,9 +630,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                             color: Colors.white,
                           ),
                           const SizedBox(width: 4),
-                          Text(
+                          const Text(
                             '완료',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,

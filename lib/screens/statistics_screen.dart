@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../providers/book/book_providers.dart';
 
@@ -60,7 +61,18 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen>
         centerTitle: true,
         backgroundColor: AppTheme.surfaceWhite,
         elevation: 0,
-         bottom: TabBar(
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.person_outline,
+              color: AppTheme.headingDark,
+            ),
+            onPressed: () {
+              context.push('/profile');
+            },
+          ),
+        ],
+        bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppTheme.brandBlue,
           indicatorWeight: 2,

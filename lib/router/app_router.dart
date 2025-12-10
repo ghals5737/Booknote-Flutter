@@ -6,6 +6,7 @@ import '../screens/auth/auth_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/review_screen.dart';
 import '../screens/statistics_screen.dart';
+import '../screens/profile_screen.dart';
 import '../screens/book_detail_screen.dart';
 import '../screens/create_note_screen.dart';
 import '../screens/create_quote_screen.dart';
@@ -75,6 +76,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/statistics',
             name: 'statistics',
             builder: (context, state) => const StatisticsScreen(),
+          ),
+          // 프로필 화면
+          GoRoute(
+            path: '/profile',
+            name: 'profile',
+            builder: (context, state) => const ProfileScreen(),
           ),
           // 책 추가 화면
           GoRoute(

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../models/book/book.dart';
 import '../models/category.dart';
 import '../models/note/note.dart';
@@ -131,6 +132,73 @@ class MockData {
       return activities.take(4).toList();
     }
     return [];
+  }
+
+  // 프로필 통계 데이터
+  static Map<String, dynamic> getProfileStats() {
+    return {
+      'booksRead': 24,
+      'notesWritten': 156,
+      'quotesSaved': 89,
+      'readingDays': 127,
+      'startDate': DateTime(2023, 1, 1),
+      'statusMessage': '책과 함께 성장하는 중입니다 📚',
+      'nickname': '독서광',
+    };
+  }
+
+  // 업적 데이터
+  static List<Map<String, dynamic>> getAchievements() {
+    return [
+      {
+        'id': 'first_book',
+        'title': '첫 책 완독',
+        'icon': Icons.emoji_events,
+        'iconColor': const Color(0xFFD97706), // 노란색
+        'backgroundColor': const Color(0xFFFFF4E6),
+        'isCompleted': true,
+      },
+      {
+        'id': 'ten_books',
+        'title': '10권 독파',
+        'icon': Icons.workspace_premium,
+        'iconColor': const Color(0xFF2563EB), // 파란색
+        'backgroundColor': const Color(0xFFEFF6FF),
+        'isCompleted': true,
+      },
+      {
+        'id': 'note_master',
+        'title': '노트 마스터',
+        'icon': Icons.description,
+        'iconColor': const Color(0xFF10B981), // 초록색
+        'backgroundColor': const Color(0xFFECFDF5),
+        'isCompleted': true,
+      },
+      {
+        'id': 'hundred_days',
+        'title': '100일 연속',
+        'icon': Icons.local_fire_department,
+        'iconColor': const Color(0xFFEC4899), // 분홍색
+        'backgroundColor': const Color(0xFFFDF2F8),
+        'isCompleted': true,
+      },
+      {
+        'id': 'fifty_books',
+        'title': '50권 독파',
+        'icon': Icons.star_border,
+        'iconColor': const Color(0xFF8B5CF6), // 보라색
+        'backgroundColor': const Color(0xFFF5F3FF),
+        'isCompleted': true,
+      },
+      {
+        'id': 'review_king',
+        'title': '리뷰왕',
+        'icon': Icons.chat_bubble_outline,
+        'iconColor': const Color(0xFFF472B6), // 연분홍색
+        'backgroundColor': const Color(0xFFFDF2F8),
+        'isCompleted': true,
+      },
+    ];
   }
 }
 

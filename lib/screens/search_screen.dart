@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 
 /// 검색 화면
@@ -104,6 +105,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         centerTitle: true,
         backgroundColor: AppTheme.surfaceWhite,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.person_outline,
+              color: AppTheme.headingDark,
+            ),
+            onPressed: () {
+              context.push('/profile');
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
