@@ -2,34 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
-import '../providers/book/book_providers.dart';
+import '../providers/statistics/statistics_providers.dart';
+import '../models/statistics/statistics_response.dart';
 
 /// 통계 화면
-class StatisticsScreen extends ConsumerStatefulWidget {
+class StatisticsScreen extends ConsumerWidget {
   const StatisticsScreen({super.key});
 
   @override
-  ConsumerState<StatisticsScreen> createState() => _StatisticsScreenState();
-}
-
-class _StatisticsScreenState extends ConsumerState<StatisticsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundCanvas,
       appBar: AppBar(
@@ -72,36 +53,8 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen>
             },
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppTheme.brandBlue,
-          indicatorWeight: 2,
-          labelColor: AppTheme.headingDark,
-          unselectedLabelColor: AppTheme.metaLight,
-          labelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.normal,
-          ),
-          tabs: const [
-            Tab(text: '개요'),
-            Tab(text: '활동'),
-            Tab(text: '태그'),
-          ],
-        ),
       ),
-      
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _OverviewTab(),
-          _ActivityTab(),
-          _TagsTab(),
-        ],
-      ),
+      body: const _OverviewTab(),
     );
   }
 }
@@ -112,15 +65,11 @@ class _OverviewTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final booksAsync = ref.watch(myLibraryBooksProvider);
+    final statisticsAsync = ref.watch(myStatisticsProvider);
 
-    return booksAsync.when(
-      data: (books) {
-        // 통계 계산
-        final totalBooks = books.length;
-        final readingBooks = books.where((b) => b.currentPage > 0 && b.currentPage < b.totalPages).length;
-        final totalNotes = books.fold<int>(0, (sum, book) => sum + book.noteCount);
-        final totalQuotes = 45; // Mock 데이터 (실제로는 API에서 가져와야 함)
+    return statisticsAsync.when(
+      data: (statistics) {
+        final summary = statistics.summary;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -140,29 +89,29 @@ class _OverviewTab extends ConsumerWidget {
                     icon: Icons.book,
                     iconColor: AppTheme.brandBlue,
                     label: '전체',
-                    value: totalBooks.toString(),
+                    value: summary.totalBooks.toString(),
                     description: '등록된 책',
                   ),
                   _buildStatCard(
                     icon: Icons.bookmark,
                     iconColor: const Color(0xFF10B981),
-                    label: '읽는 중',
-                    value: readingBooks.toString(),
-                    description: '진행 중인 책',
+                    label: '읽은 책',
+                    value: summary.readBooks.toString(),
+                    description: '읽은 책',
+                  ),
+                  _buildStatCard(
+                    icon: Icons.menu_book,
+                    iconColor: const Color(0xFF8B5CF6),
+                    label: '페이지',
+                    value: summary.totalPages.toString(),
+                    description: '읽은 페이지',
                   ),
                   _buildStatCard(
                     icon: Icons.note,
-                    iconColor: const Color(0xFF8B5CF6),
-                    label: '노트',
-                    value: totalNotes.toString(),
-                    description: '작성한 노트',
-                  ),
-                  _buildStatCard(
-                    icon: Icons.format_quote,
                     iconColor: const Color(0xFFFF9800),
-                    label: '인용구',
-                    value: totalQuotes.toString(),
-                    description: '저장한 인용구',
+                    label: '노트',
+                    value: summary.totalNotes.toString(),
+                    description: '작성한 노트',
                   ),
                 ],
               ),
@@ -170,11 +119,17 @@ class _OverviewTab extends ConsumerWidget {
               // 연속 독서 기록
               _buildReadingStreakCard(),
               const SizedBox(height: 16),
-              // 주간 활동
-              _buildWeeklyActivitySection(),
+              // 월별 활동
+              _buildMonthlyActivitySection(statistics.monthly),
               const SizedBox(height: 16),
               // 카테고리별 분포
-              _buildCategoryDistributionSection(books),
+              _buildCategoryDistributionSection(statistics.category),
+              const SizedBox(height: 16),
+              // 자주 사용하는 태그
+              _buildFrequentTagsSection(),
+              const SizedBox(height: 16),
+              // 태그별 통계
+              _buildTagStatsSection(),
             ],
           ),
         );
@@ -300,7 +255,39 @@ class _OverviewTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildWeeklyActivitySection() {
+  Widget _buildMonthlyActivitySection(List<MonthlyStat> monthlyStats) {
+    if (monthlyStats.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceWhite,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.divider,
+            width: 1,
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            '월별 활동 데이터가 없습니다',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.metaLight,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 최근 6개월 데이터만 표시
+    final recentMonths = monthlyStats.length > 6 
+        ? monthlyStats.sublist(monthlyStats.length - 6)
+        : monthlyStats;
+    
+    final maxReadCount = recentMonths.isNotEmpty
+        ? recentMonths.map((m) => m.readCount).reduce((a, b) => a > b ? a : b)
+        : 1;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -314,44 +301,27 @@ class _OverviewTab extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                '주간 활동',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.headingDark,
-                ),
-              ),
-              Row(
-                children: [
-                  _buildTimeFilterButton('주', false),
-                  const SizedBox(width: 8),
-                  _buildTimeFilterButton('월', true),
-                  const SizedBox(width: 8),
-                  _buildTimeFilterButton('년', false),
-                ],
-              ),
-            ],
+          const Text(
+            '월별 활동',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.headingDark,
+            ),
           ),
           const SizedBox(height: 16),
-          // 주간 활동 차트
+          // 월별 활동 차트
           SizedBox(
             height: 120,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _buildBarChart('월', 40),
-                _buildBarChart('화', 20),
-                _buildBarChart('수', 80),
-                _buildBarChart('목', 50),
-                _buildBarChart('금', 100),
-                _buildBarChart('토', 60),
-                _buildBarChart('일', 90),
-              ],
+              children: recentMonths.map((month) {
+                final height = maxReadCount > 0 
+                    ? (month.readCount / maxReadCount) * 100 
+                    : 0.0;
+                return _buildBarChart(month.label, height);
+              }).toList(),
             ),
           ),
         ],
@@ -359,26 +329,6 @@ class _OverviewTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildTimeFilterButton(String label, bool isSelected) {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.brandLightTint : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected ? AppTheme.brandBlue : AppTheme.bodyMedium,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildBarChart(String label, double height) {
     return Column(
@@ -404,17 +354,34 @@ class _OverviewTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildCategoryDistributionSection(List books) {
-    // 카테고리별 책 수 계산
-    final categoryCounts = <String, int>{};
-    for (var book in books) {
-      categoryCounts[book.category] = (categoryCounts[book.category] ?? 0) + 1;
+  Widget _buildCategoryDistributionSection(List<CategoryStat> categoryStats) {
+    if (categoryStats.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceWhite,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.divider,
+            width: 1,
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            '카테고리별 데이터가 없습니다',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.metaLight,
+            ),
+          ),
+        ),
+      );
     }
 
-    final sortedCategories = categoryCounts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final sortedCategories = List.from(categoryStats)
+      ..sort((a, b) => b.count.compareTo(a.count));
 
-    final maxCount = sortedCategories.isNotEmpty ? sortedCategories.first.value : 1;
+    final maxCount = sortedCategories.isNotEmpty ? sortedCategories.first.count : 1;
     final categoryColors = [
       AppTheme.brandBlue,
       const Color(0xFF10B981),
@@ -448,7 +415,7 @@ class _OverviewTab extends ConsumerWidget {
           ...sortedCategories.asMap().entries.map((entry) {
             final index = entry.key;
             final category = entry.value;
-            final percentage = (category.value / maxCount) * 100;
+            final percentage = (category.count / maxCount) * 100;
             final color = categoryColors[index % categoryColors.length];
 
             return Padding(
@@ -471,7 +438,7 @@ class _OverviewTab extends ConsumerWidget {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          '${category.value}권',
+                          '${category.count}권',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -483,7 +450,7 @@ class _OverviewTab extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    category.key,
+                    category.categoryName,
                     style: const TextStyle(
                       fontSize: 14,
                       color: AppTheme.headingDark,
@@ -497,212 +464,8 @@ class _OverviewTab extends ConsumerWidget {
       ),
     );
   }
-}
 
-/// 활동 탭
-class _ActivityTab extends StatelessWidget {
-  const _ActivityTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 활동 히트맵
-          _buildActivityHeatmap(),
-          const SizedBox(height: 24),
-          // 독서 시간
-          _buildReadingTimeSection(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityHeatmap() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.divider,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '활동 히트맵',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.headingDark,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // 히트맵 그리드 (5주 x 7일)
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              crossAxisSpacing: 4,
-              mainAxisSpacing: 4,
-            ),
-            itemCount: 35,
-            itemBuilder: (context, index) {
-              // 랜덤 활동 레벨 (0-4)
-              final level = (index % 5);
-              final colors = [
-                AppTheme.divider,
-                AppTheme.brandLightTint,
-                AppTheme.brandBlue.withOpacity(0.5),
-                AppTheme.brandBlue.withOpacity(0.7),
-                AppTheme.brandBlue,
-              ];
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: colors[level],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          // 범례
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '적음',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.metaLight,
-                ),
-              ),
-              Row(
-                children: List.generate(5, (index) {
-                  final colors = [
-                    AppTheme.divider,
-                    AppTheme.brandLightTint,
-                    AppTheme.brandBlue.withOpacity(0.5),
-                    AppTheme.brandBlue.withOpacity(0.7),
-                    AppTheme.brandBlue,
-                  ];
-                  return Container(
-                    width: 12,
-                    height: 12,
-                    margin: const EdgeInsets.only(left: 4),
-                    decoration: BoxDecoration(
-                      color: colors[index],
-                      shape: BoxShape.circle,
-                    ),
-                  );
-                }),
-              ),
-              Text(
-                '많음',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.metaLight,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReadingTimeSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceWhite,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.divider,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '독서 시간',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.headingDark,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // 총 독서 시간
-          Text(
-            '39h 0m',
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.brandBlue,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '이번 달 총 독서 시간',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.metaLight,
-            ),
-          ),
-          const SizedBox(height: 24),
-          // 통계
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildTimeStat('39h', '평균/월'),
-              _buildTimeStat('1.3h', '평균/일'),
-              _buildTimeStat('78h', '총 시간'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeStat(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.headingDark,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppTheme.metaLight,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 태그 탭
-class _TagsTab extends StatelessWidget {
-  const _TagsTab();
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildFrequentTagsSection() {
     // Mock 태그 데이터
     final frequentTags = [
       _TagData('중요', const Color(0xFFFF6B6B)),
@@ -712,6 +475,59 @@ class _TagsTab extends StatelessWidget {
       _TagData('아이디어', const Color(0xFF8B5CF6)),
     ];
 
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.divider,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '자주 사용하는 태그',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.headingDark,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: frequentTags.map((tag) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: tag.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '#${tag.name}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: tag.color,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagStatsSection() {
+    // Mock 태그 통계 데이터
     final tagStats = [
       _TagStat('중요', 25, const Color(0xFFFF6B6B)),
       _TagStat('복습', 18, AppTheme.brandBlue),
@@ -722,153 +538,93 @@ class _TagsTab extends StatelessWidget {
 
     final maxCount = tagStats.isNotEmpty ? tagStats.first.count : 1;
 
-    return SingleChildScrollView(
+    return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.divider,
+          width: 1,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 자주 사용하는 태그
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceWhite,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.divider,
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '자주 사용하는 태그',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.headingDark,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: frequentTags.map((tag) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: tag.color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '#${tag.name}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: tag.color,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+          const Text(
+            '태그별 통계',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.headingDark,
             ),
           ),
           const SizedBox(height: 16),
-          // 태그별 통계
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceWhite,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppTheme.divider,
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '태그별 통계',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.headingDark,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...tagStats.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final stat = entry.value;
-                  final percentage = (stat.count / maxCount) * 100;
+          ...tagStats.asMap().entries.map((entry) {
+            final index = entry.key;
+            final stat = entry.value;
+            final percentage = (stat.count / maxCount) * 100;
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        // 순위
-                        Text(
-                          '#${index + 1}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.metaLight,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // 태그 이름
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: stat.color.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '#${stat.name}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: stat.color,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // 진행 바
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: percentage / 100,
-                              backgroundColor: AppTheme.borderSubtle,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.brandBlue),
-                              minHeight: 8,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // 카운트
-                        Text(
-                          stat.count.toString(),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.headingDark,
-                          ),
-                        ),
-                      ],
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  // 순위
+                  Text(
+                    '#${index + 1}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.metaLight,
                     ),
-                  );
-                }),
-              ],
-            ),
-          ),
+                  ),
+                  const SizedBox(width: 8),
+                  // 태그 이름
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: stat.color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '#${stat.name}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: stat.color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // 진행 바
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: percentage / 100,
+                        backgroundColor: AppTheme.borderSubtle,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.brandBlue),
+                        minHeight: 8,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // 카운트
+                  Text(
+                    stat.count.toString(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.headingDark,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
