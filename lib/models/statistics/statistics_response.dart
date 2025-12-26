@@ -30,11 +30,15 @@ class StatisticsData {
   final Summary summary;
   final List<MonthlyStat> monthly;
   final List<CategoryStat> category;
+  final List<TagStat> tag;
+  final Activity activity;
 
   StatisticsData({
     required this.summary,
     required this.monthly,
     required this.category,
+    required this.tag,
+    required this.activity,
   });
 
   factory StatisticsData.fromJson(Map<String, dynamic> json) {
@@ -48,6 +52,11 @@ class StatisticsData {
               ?.map((e) => CategoryStat.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      tag: (json['tag'] as List?)
+              ?.map((e) => TagStat.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      activity: Activity.fromJson(json['activity'] ?? {}),
     );
   }
 }
@@ -117,6 +126,46 @@ class CategoryStat {
       categoryCode: json['categoryCode'] ?? '',
       categoryName: json['categoryName'] ?? '',
       count: json['count'] ?? 0,
+    );
+  }
+}
+
+class TagStat {
+  final String tagName;
+  final int usageCount;
+
+  TagStat({
+    required this.tagName,
+    required this.usageCount,
+  });
+
+  factory TagStat.fromJson(Map<String, dynamic> json) {
+    return TagStat(
+      tagName: json['tagName'] ?? '',
+      usageCount: json['usageCount'] ?? 0,
+    );
+  }
+}
+
+class Activity {
+  final int currentStreak;
+  final int maxStreak;
+  final String lastActivityDate;
+  final int totalReadTimeMinutes;
+
+  Activity({
+    required this.currentStreak,
+    required this.maxStreak,
+    required this.lastActivityDate,
+    required this.totalReadTimeMinutes,
+  });
+
+  factory Activity.fromJson(Map<String, dynamic> json) {
+    return Activity(
+      currentStreak: json['currentStreak'] ?? 0,
+      maxStreak: json['maxStreak'] ?? 0,
+      lastActivityDate: json['lastActivityDate'] ?? '',
+      totalReadTimeMinutes: json['totalReadTimeMinutes'] ?? 0,
     );
   }
 }

@@ -117,7 +117,7 @@ class _OverviewTab extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               // 연속 독서 기록
-              _buildReadingStreakCard(),
+              _buildReadingStreakCard(statistics.activity),
               const SizedBox(height: 16),
               // 월별 활동
               _buildMonthlyActivitySection(statistics.monthly),
@@ -126,10 +126,10 @@ class _OverviewTab extends ConsumerWidget {
               _buildCategoryDistributionSection(statistics.category),
               const SizedBox(height: 16),
               // 자주 사용하는 태그
-              _buildFrequentTagsSection(),
+              _buildFrequentTagsSection(statistics.tag),
               const SizedBox(height: 16),
               // 태그별 통계
-              _buildTagStatsSection(),
+              _buildTagStatsSection(statistics.tag),
             ],
           ),
         );
@@ -206,7 +206,7 @@ class _OverviewTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildReadingStreakCard() {
+  Widget _buildReadingStreakCard(Activity activity) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -235,14 +235,22 @@ class _OverviewTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                '15일',
-                style: TextStyle(
+              Text(
+                '${activity.currentStreak}일',
+                style: const TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
+              if (activity.maxStreak > activity.currentStreak)
+                Text(
+                  '최고 기록: ${activity.maxStreak}일',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
             ],
           ),
           Icon(
@@ -465,14 +473,44 @@ class _OverviewTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildFrequentTagsSection() {
-    // Mock 태그 데이터
-    final frequentTags = [
-      _TagData('중요', const Color(0xFFFF6B6B)),
-      _TagData('복습', AppTheme.brandBlue),
-      _TagData('질문', const Color(0xFFFFEB3B)),
-      _TagData('인용', const Color(0xFF10B981)),
-      _TagData('아이디어', const Color(0xFF8B5CF6)),
+  Widget _buildFrequentTagsSection(List<TagStat> tagStats) {
+    if (tagStats.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceWhite,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.divider,
+            width: 1,
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            '태그 데이터가 없습니다',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.metaLight,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 사용 횟수 기준으로 정렬 후 상위 5개 태그만 표시
+    final sortedTags = List<TagStat>.from(tagStats)
+      ..sort((a, b) => b.usageCount.compareTo(a.usageCount));
+    
+    final topTags = sortedTags.length > 5 
+        ? sortedTags.sublist(0, 5)
+        : sortedTags;
+
+    final tagColors = [
+      const Color(0xFFFF6B6B),
+      AppTheme.brandBlue,
+      const Color(0xFFFFEB3B),
+      const Color(0xFF10B981),
+      const Color(0xFF8B5CF6),
     ];
 
     return Container(
@@ -500,22 +538,26 @@ class _OverviewTab extends ConsumerWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: frequentTags.map((tag) {
+            children: topTags.asMap().entries.map((entry) {
+              final index = entry.key;
+              final tag = entry.value;
+              final color = tagColors[index % tagColors.length];
+              
               return Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: tag.color.withOpacity(0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '#${tag.name}',
+                  '#${tag.tagName}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: tag.color,
+                    color: color,
                   ),
                 ),
               );
@@ -526,17 +568,42 @@ class _OverviewTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildTagStatsSection() {
-    // Mock 태그 통계 데이터
-    final tagStats = [
-      _TagStat('중요', 25, const Color(0xFFFF6B6B)),
-      _TagStat('복습', 18, AppTheme.brandBlue),
-      _TagStat('질문', 15, const Color(0xFFFFEB3B)),
-      _TagStat('인용', 12, const Color(0xFF10B981)),
-      _TagStat('아이디어', 10, const Color(0xFF8B5CF6)),
-    ];
+  Widget _buildTagStatsSection(List<TagStat> tagStats) {
+    if (tagStats.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceWhite,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.divider,
+            width: 1,
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            '태그 통계 데이터가 없습니다',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.metaLight,
+            ),
+          ),
+        ),
+      );
+    }
 
-    final maxCount = tagStats.isNotEmpty ? tagStats.first.count : 1;
+    // 사용 횟수 기준으로 정렬
+    final sortedTags = List<TagStat>.from(tagStats)
+      ..sort((a, b) => b.usageCount.compareTo(a.usageCount));
+
+    final maxCount = sortedTags.isNotEmpty ? sortedTags.first.usageCount : 1;
+    final tagColors = [
+      const Color(0xFFFF6B6B),
+      AppTheme.brandBlue,
+      const Color(0xFFFFEB3B),
+      const Color(0xFF10B981),
+      const Color(0xFF8B5CF6),
+    ];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -560,10 +627,11 @@ class _OverviewTab extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ...tagStats.asMap().entries.map((entry) {
+          ...sortedTags.asMap().entries.map((entry) {
             final index = entry.key;
-            final stat = entry.value;
-            final percentage = (stat.count / maxCount) * 100;
+            final tag = entry.value;
+            final percentage = (tag.usageCount / maxCount) * 100;
+            final color = tagColors[index % tagColors.length];
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -586,15 +654,15 @@ class _OverviewTab extends ConsumerWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: stat.color.withOpacity(0.1),
+                      color: color.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '#${stat.name}',
+                      '#${tag.tagName}',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: stat.color,
+                        color: color,
                       ),
                     ),
                   ),
@@ -614,7 +682,7 @@ class _OverviewTab extends ConsumerWidget {
                   const SizedBox(width: 12),
                   // 카운트
                   Text(
-                    stat.count.toString(),
+                    tag.usageCount.toString(),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -631,17 +699,3 @@ class _OverviewTab extends ConsumerWidget {
   }
 }
 
-class _TagData {
-  final String name;
-  final Color color;
-
-  _TagData(this.name, this.color);
-}
-
-class _TagStat {
-  final String name;
-  final int count;
-  final Color color;
-
-  _TagStat(this.name, this.count, this.color);
-}
