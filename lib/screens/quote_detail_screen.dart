@@ -35,7 +35,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
     });
   }
 
-  Future<void> _deleteQuote() async {
+  Future<void> _deleteQuote(Quote quote) async {
     setState(() {
       _showMenu = false;
     });
@@ -68,7 +68,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
       
       try {
         final quoteService = ref.read(quoteServiceProvider);
-        await quoteService.deleteQuote(widget.quote.id);
+        await quoteService.deleteQuote(quote.id);
         
         if (mounted) {
           // Provider 무효화하여 리스트 새로고침
@@ -107,6 +107,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final bookDetailAsync = ref.watch(bookDetailProvider(widget.bookId));
+    final quotesAsync = ref.watch(quotesForBookProvider(widget.bookId));
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundCanvas,
@@ -144,33 +145,41 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
         backgroundColor: AppTheme.surfaceWhite,
         elevation: 0,
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                // 인용구 카드
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceWhite,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
+      body: quotesAsync.when(
+        data: (quotes) {
+          // 인용구 목록에서 현재 인용구 ID와 일치하는 최신 인용구 찾기
+          final currentQuote = quotes.firstWhere(
+            (q) => q.id == widget.quote.id,
+            orElse: () => widget.quote, // 찾지 못하면 초기 인용구 사용
+          );
+
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    // 인용구 카드
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceWhite,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 중요 인용구 헤더 (isImportant가 true일 때만 표시)
-                      if (widget.quote.isImportant)
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 중요 인용구 헤더 (isImportant가 true일 때만 표시)
+                          if (currentQuote.isImportant)
                         Row(
                           children: [
                             const Icon(
@@ -220,7 +229,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
                           // 인용구 텍스트
                           Expanded(
                             child: Text(
-                              widget.quote.text,
+                              currentQuote.text,
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
@@ -237,7 +246,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
                             color: Colors.grey[400], // text-gray-400
                           ),
                           // 더보기 버튼 (isImportant가 false일 때만 표시)
-                          if (!widget.quote.isImportant) ...[
+                          if (!currentQuote.isImportant) ...[
                             const SizedBox(width: 8),
                             IconButton(
                               key: _moreButtonKey,
@@ -306,7 +315,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'p.${widget.quote.page}',
+                            'p.${currentQuote.page}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppTheme.metaLight,
@@ -324,7 +333,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _formatDateTime(widget.quote.createdAt),
+                            _formatDateTime(currentQuote.createdAt),
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppTheme.metaLight,
@@ -335,7 +344,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
                     ],
                   ),
                   // 메모 (comment)가 있는 경우
-                  if (widget.quote.comment != null && widget.quote.comment!.isNotEmpty) ...[
+                  if (currentQuote.comment != null && currentQuote.comment!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -344,7 +353,7 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        widget.quote.comment!,
+                        currentQuote.comment!,
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppTheme.headingDark,
@@ -355,11 +364,11 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
                   ],
                   const SizedBox(height: 16),
                   // 태그
-                  if (widget.quote.tags.isNotEmpty)
+                  if (currentQuote.tags.isNotEmpty)
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: widget.quote.tags.map((tag) {
+                      children: currentQuote.tags.map((tag) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -513,95 +522,153 @@ class _QuoteDetailScreenState extends ConsumerState<QuoteDetailScreen> {
               ),
             ),
             const SizedBox(height: 100),
-          ],
-        ),
-      ),
-          // 배경 오버레이 (메뉴가 열릴 때)
-          if (_showMenu)
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  setState(() {
-                    _showMenu = false;
-                  });
-                },
-                child: Container(
-                  color: Colors.black.withOpacity(0.3),
+                  ],
                 ),
               ),
-            ),
-          // 더보기 메뉴
-          if (_showMenu)
-            Builder(
-              builder: (context) {
-                // 더보기 버튼의 위치 계산
-                final RenderBox? renderBox = _moreButtonKey.currentContext?.findRenderObject() as RenderBox?;
-                final Offset? offset = renderBox?.localToGlobal(Offset.zero);
-                final Size? size = renderBox?.size;
-                
-                // 위치 계산 (더보기 버튼 아래에 배치)
-                double top = 100; // 기본값
-                double right = 16; // 기본값
-                
-                if (offset != null && size != null) {
-                  // 더보기 버튼의 오른쪽 아래에 메뉴 배치
-                  top = offset.dy + size.height;
-                  right = MediaQuery.of(context).size.width - offset.dx - size.width;
-                }
-                
-                return Positioned(
-                  right: right,
-                  top: top,
-                  child: IgnorePointer(
-                    ignoring: false,
-                    child: Material(
-                      elevation: 8,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: 120,
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceWhite,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: AppTheme.divider,
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              leading: const Icon(
-                                Icons.delete,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                              title: const Text(
-                                '삭제',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.red,
-                                ),
-                              ),
-                              onTap: () {
-                                _deleteQuote();
-                              },
-                              dense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+              // 배경 오버레이 (메뉴가 열릴 때)
+              if (_showMenu)
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      setState(() {
+                        _showMenu = false;
+                      });
+                    },
+                    child: Container(
+                      color: Colors.black.withOpacity(0.3),
                     ),
                   ),
-                );
-              },
-            ),
-        ],
+                ),
+              // 더보기 메뉴
+              if (_showMenu)
+                Builder(
+                  builder: (context) {
+                    // 더보기 버튼의 위치 계산
+                    final RenderBox? renderBox = _moreButtonKey.currentContext?.findRenderObject() as RenderBox?;
+                    final Offset? offset = renderBox?.localToGlobal(Offset.zero);
+                    final Size? size = renderBox?.size;
+                    
+                    // 위치 계산 (더보기 버튼 아래에 배치)
+                    double top = 100; // 기본값
+                    double right = 16; // 기본값
+                    
+                    if (offset != null && size != null) {
+                      // 더보기 버튼의 오른쪽 아래에 메뉴 배치
+                      top = offset.dy + size.height;
+                      right = MediaQuery.of(context).size.width - offset.dx - size.width;
+                    }
+                    
+                    return Positioned(
+                      right: right,
+                      top: top,
+                      child: IgnorePointer(
+                        ignoring: false,
+                        child: Material(
+                          elevation: 8,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: 120,
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceWhite,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppTheme.divider,
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.edit,
+                                    size: 20,
+                                    color: AppTheme.bodyMedium,
+                                  ),
+                                  title: const Text(
+                                    '수정',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppTheme.headingDark,
+                                    ),
+                                  ),
+                                  onTap: () async {
+                                    setState(() {
+                                      _showMenu = false;
+                                    });
+                                    
+                                    final bookDetailAsync = ref.read(bookDetailProvider(widget.bookId));
+                                    final bookDetail = await bookDetailAsync.when(
+                                      data: (data) => data,
+                                      loading: () => null,
+                                      error: (_, __) => null,
+                                    );
+                                    
+                                    if (bookDetail != null && mounted) {
+                                      final result = await context.push(
+                                        '/book/${widget.bookId}/quote/${currentQuote.id}/edit',
+                                        extra: {'quote': currentQuote, 'bookDetail': bookDetail},
+                                      );
+                                      
+                                      // result가 Quote 객체인지 확인하고 사용
+                                      if (result != null && result is Quote && mounted) {
+                                        ref.invalidate(quotesForBookProvider(widget.bookId));
+                                        ref.invalidate(bookFullDataProvider(widget.bookId));
+                                        Navigator.of(context).pop();
+                                        // 업데이트된 인용구 객체를 전달
+                                        context.push(
+                                          '/book/${widget.bookId}/quote/${currentQuote.id}',
+                                          extra: result, // 업데이트된 인용구 사용
+                                        );
+                                      }
+                                    }
+                                  },
+                                  dense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                ),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.delete,
+                                    size: 20,
+                                    color: Colors.red,
+                                  ),
+                                  title: const Text(
+                                    '삭제',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    _deleteQuote(currentQuote);
+                                  },
+                                  dense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          );
+        },
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (err, stack) => Center(
+          child: Text('인용구 정보를 불러올 수 없습니다: $err'),
+        ),
       ),
     );
   }

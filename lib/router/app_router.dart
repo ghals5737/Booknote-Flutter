@@ -13,6 +13,7 @@ import '../screens/create_quote_screen.dart';
 import '../screens/note_detail_screen.dart';
 import '../screens/edit_note_screen.dart';
 import '../screens/quote_detail_screen.dart';
+import '../screens/edit_quote_screen.dart';
 import '../screens/add_book_screen.dart';
 import '../providers/auth/auth_providers.dart';
 import '../models/auth/user.dart';
@@ -186,6 +187,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                   }
                   return QuoteDetailScreen(quote: quote, bookId: bookId);
                 },
+                routes: [
+                  // 인용구 수정 화면
+                  GoRoute(
+                    path: 'edit',
+                    name: 'editQuote',
+                    builder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>?;
+                      if (extra == null) {
+                        return const Scaffold(
+                          body: Center(child: Text('인용구 정보를 불러올 수 없습니다')),
+                        );
+                      }
+                      final quote = extra['quote'] as Quote;
+                      final bookDetail = extra['bookDetail'] as BookDetailData;
+                      return EditQuoteScreen(quote: quote, bookDetail: bookDetail);
+                    },
+                  ),
+                ],
               ),
             ],
           ),

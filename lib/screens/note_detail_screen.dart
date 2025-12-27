@@ -542,6 +542,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
                                   // 수정 성공 시 Provider 무효화하여 데이터 새로고침
                                   if (result == true && mounted) {
                                     ref.invalidate(notesForBookProvider(widget.bookId));
+                                    ref.invalidate(bookFullDataProvider(widget.bookId));
                                     // 노트 상세 화면도 새로고침하기 위해 다시 로드
                                     Navigator.of(context).pop();
                                     context.push(

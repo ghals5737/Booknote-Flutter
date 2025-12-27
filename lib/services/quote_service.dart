@@ -136,5 +136,53 @@ class QuoteService {
       throw Exception('Failed to connect server: $e');
     }
   }
+
+  Future<Quote> updateQuote({
+    required int quoteId,
+    required String content,
+    required int page,
+    String? memo,
+    required bool isImportant,
+  }) async {
+    final url = Uri.parse('$baseUrl/api/v1/quotes/$quoteId');
+    final token = await _getAccessToken();
+    
+    final requestBody = {
+      'content': content,
+      'page': page,
+      'memo': memo ?? '', // memo는 빈 문자열로라도 포함
+      'isImportant': isImportant,
+    };
+    
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(requestBody),
+      );
+      
+      final decodedBody = utf8.decode(response.bodyBytes);
+      final jsonMap = jsonDecode(decodedBody);
+      
+      if (response.statusCode == 200) {
+        if (jsonMap['success'] == true && jsonMap['data'] != null) {
+          return Quote.fromJson(jsonMap['data']);
+        } else {
+          throw Exception(jsonMap['message'] ?? 'Failed to update quote');
+        }
+      } else {
+        throw Exception(jsonMap['message'] ?? 'Failed to update quote (Status: ${response.statusCode})');
+      }
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Failed to connect server: $e');
+    }
+  }
 }
 
