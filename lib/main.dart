@@ -28,7 +28,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
-    // 앱 시작 시 인증 Repository 초기화 (저장된 사용자 정보 로드)
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final repository = ref.read(authRepositoryProvider);
       repository.initialize().then((_) {
