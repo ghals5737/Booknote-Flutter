@@ -1,101 +1,1207 @@
 {
-  "designSystem": {
-    "metadata": {
-      "appName": "Booknote",
-      "theme": "Warm Minimalist",
-      "baseFontSize": "16px"
-    },
-    "colorPalette": {
-      "backgrounds": {
-        "appCanvas": "#F4F2F0", 
-        "surfacePrimary": "#FFFFFF",
-        "surfaceSecondary": "#FAFAFA",
-        "overlayDark": "rgba(44, 38, 34, 0.6)"
-      },
-      "brand": {
-        "primary": "#4E4036",
-        "primaryHover": "#3A3029",
-        "accent": "#E6DCCA",
-        "highlight": "#FF7F50" 
-      },
-      "text": {
-        "heading": "#2C2622",
-        "body": "#4A4A4A",
-        "muted": "#8C8C8C",
-        "inverse": "#FFFFFF"
-      },
-      "status": {
-        "success": "#6B8E23",
-        "warning": "#DAA520"
-      },
-      "border": {
-        "subtle": "#EAEAEA",
-        "focus": "#4E4036"
-      }
-    },
-    "typography": {
-      "fontFamily": {
-        "headings": "'Noto Serif KR', 'Times New Roman', serif",
-        "body": "'Pretendard', 'San Francisco', sans-serif"
-      },
-      "weights": {
-        "regular": 400,
-        "medium": 500,
-        "bold": 700
-      }
-    },
-    "componentStyles": {
-      "cards": {
-        "dashboardCard": {
-          "borderRadius": "12px",
-          "backgroundColor": "#FFFFFF",
-          "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.03)",
-          "padding": "24px"
+  "projectName": "Booknote Mobile",
+  "version": "1.0.0",
+  "platform": "Mobile Web (375px-428px)",
+  "designPhilosophy": "Warm library aesthetic with brown-toned, minimal design focused on reading and memory retention",
+
+  "colorSystem": {
+    "brandColors": {
+      "primary": {
+        "brown": {
+          "value": "#5d4a3a",
+          "usage": "Primary brand color - Navigation active states, primary buttons, brand elements, selected tabs",
+          "contexts": [
+            "Bottom navigation active text and icons",
+            "Primary action buttons (복습하러 가기, 내용 확인하기)",
+            "Selected category pills in library",
+            "App logo background",
+            "Review card accent icon containers",
+            "Tab underline indicators"
+          ]
         },
-        "bookCover": {
-          "borderRadius": "4px",
-          "boxShadow": "0 4px 8px rgba(0, 0, 0, 0.15)"
+        "brownDark": {
+          "value": "#4d3a2a",
+          "usage": "Hover state for primary brown elements",
+          "contexts": [
+            "Primary button hover states",
+            "Floating add button hover",
+            "User profile button hover"
+          ]
+        },
+        "brownLight": {
+          "value": "#5d4a3a",
+          "opacity": "10% (rgba(93, 74, 58, 0.1))",
+          "usage": "Subtle brand-tinted borders for featured cards",
+          "contexts": [
+            "Today review preview card border (border-2)",
+            "Highlighted content container borders"
+          ]
+        }
+      }
+    },
+
+    "neutralColors": {
+      "text": {
+        "primary": {
+          "value": "#3d3d3d",
+          "usage": "Primary text content - Headings, body text, labels",
+          "fontSize": "14px-24px range",
+          "contexts": [
+            "Card headings and titles",
+            "Button text",
+            "Main content paragraphs",
+            "Book titles in library",
+            "Tab labels when active"
+          ]
+        },
+        "secondary": {
+          "value": "#717182",
+          "usage": "Secondary text - Descriptions, metadata, helper text",
+          "fontSize": "12px-14px range",
+          "contexts": [
+            "Subtitle text under headings",
+            "Book author names",
+            "Descriptive text in cards",
+            "Inactive navigation labels",
+            "Action menu descriptions"
+          ]
+        },
+        "tertiary": {
+          "value": "#a1a1aa",
+          "usage": "Tertiary text - Placeholder text, timestamps, very low priority info",
+          "fontSize": "11px-13px range",
+          "contexts": [
+            "Input placeholder text",
+            "Previous answer timestamps",
+            "Page counters",
+            "Metadata separators",
+            "Icon colors in inactive states"
+          ]
         }
       },
-      "navigation": {
-        "topBar": {
-          "backgroundColor": "#F4F2F0",
-          "height": "64px",
-          "textColor": "#4E4036"
+
+      "backgrounds": {
+        "white": {
+          "value": "#ffffff",
+          "usage": "Primary surface color - Cards, containers, main backgrounds",
+          "contexts": [
+            "Screen backgrounds",
+            "Card backgrounds",
+            "Bottom navigation background",
+            "Bottom sheet backgrounds",
+            "Modal overlays"
+          ]
+        },
+        "grayLight": {
+          "value": "#f8f8f8",
+          "usage": "Subtle background differentiation - Nested content areas, date badges",
+          "contexts": [
+            "Secondary card backgrounds within primary cards",
+            "Date picker badge backgrounds",
+            "Icon container backgrounds",
+            "Nested thought sections in review cards",
+            "History header icon backgrounds"
+          ]
+        },
+        "grayMedium": {
+          "value": "#f3f3f5",
+          "usage": "Input backgrounds, inactive button states",
+          "contexts": [
+            "Search input backgrounds",
+            "Inactive category pill backgrounds",
+            "Neutral button backgrounds",
+            "Answer button default states",
+            "Notification button backgrounds"
+          ]
+        },
+        "grayDark": {
+          "value": "#f0f0f0",
+          "usage": "Gradient endpoints, subtle depth",
+          "contexts": [
+            "Completion state card gradients (from-[#f8f8f8] to-[#f0f0f0])",
+            "Subtle background variations"
+          ]
         }
       },
-      "inputs": {
-        "searchBar": {
-          "backgroundColor": "#FFFFFF",
-          "borderRadius": "8px",
-          "border": "1px solid #EAEAEA",
-          "placeholderColor": "#8C8C8C",
-          "height": "48px"
+
+      "borders": {
+        "light": {
+          "value": "#f0f0f0",
+          "usage": "Very subtle borders - Header separators",
+          "contexts": [
+            "Header bottom border"
+          ]
+        },
+        "medium": {
+          "value": "#e9e9e9",
+          "usage": "Standard border treatment - Card borders, dividers, separators",
+          "width": "1px",
+          "contexts": [
+            "Card container borders (border-1 default)",
+            "Bottom navigation top border",
+            "Date badge borders",
+            "Review card borders (border-2 for emphasis)",
+            "Bottom sheet handle backgrounds",
+            "Action menu item borders",
+            "Input focus states (with opacity)"
+          ]
+        }
+      }
+    },
+
+    "semanticColors": {
+      "interactive": {
+        "blue": {
+          "value": "#2563eb",
+          "usage": "Note-related actions and 기억해요 state",
+          "contexts": [
+            "Note add button icon background",
+            "기억해요 answer tag (text + bg: #dbeafe)"
+          ]
+        },
+        "purple": {
+          "value": "#7c3aed",
+          "usage": "Quote-related actions",
+          "contexts": [
+            "Quote add button icon background"
+          ]
         }
       },
-      "controls": {
-        "buttons": {
-          "primary": {
-            "backgroundColor": "#4E4036",
-            "textColor": "#FFFFFF",
-            "borderRadius": "6px",
-            "padding": "10px 20px"
+
+      "status": {
+        "warning": {
+          "value": "#d97706",
+          "usage": "Difficulty indicator - 어려웠어요 state",
+          "contexts": [
+            "어려웠어요 answer button text color",
+            "어려웠어요 answer tag text (bg: #fef3c7)"
+          ]
+        },
+        "success": {
+          "value": "#16a34a",
+          "usage": "Success indicator - 쉬웠어요 state",
+          "contexts": [
+            "쉬웠어요 answer tag text (bg: #dcfce7)"
+          ]
+        },
+        "info": {
+          "value": "#4a7c59",
+          "usage": "Growth/learning indicator",
+          "contexts": [
+            "Sprout icon color in review cards"
+          ]
+        },
+        "infoBackground": {
+          "value": "#f0f5f0",
+          "usage": "Growth icon container background",
+          "contexts": [
+            "Sprout icon container background in review cards"
+          ]
+        }
+      },
+
+      "overlay": {
+        "modal": {
+          "value": "#000000",
+          "opacity": "50% (rgba(0, 0, 0, 0.5))",
+          "usage": "Modal and bottom sheet overlay backgrounds",
+          "contexts": [
+            "Bottom sheet backdrop",
+            "Modal overlay background"
+          ]
+        }
+      }
+    },
+
+    "gradients": {
+      "brandPrimary": {
+        "type": "linear-gradient",
+        "direction": "to bottom right (to-br)",
+        "stops": [
+          { "position": "0%", "color": "#5d4a3a" },
+          { "position": "100%", "color": "#4d3a2a" }
+        ],
+        "usage": "Primary brand gradient - Icon containers, featured elements",
+        "contexts": [
+          "Today review preview header icon container (w-12 h-12)",
+          "Calendar icon accent backgrounds"
+        ]
+      },
+      "completion": {
+        "type": "linear-gradient",
+        "direction": "to bottom right (to-br)",
+        "stops": [
+          { "position": "0%", "color": "#f8f8f8" },
+          { "position": "100%", "color": "#f0f0f0" }
+        ],
+        "usage": "Completion/empty state backgrounds",
+        "contexts": [
+          "Review completion card background"
+        ]
+      }
+    }
+  },
+
+  "typography": {
+    "fontFamily": "System default (-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif)",
+    "fontWeights": {
+      "normal": 400,
+      "medium": 500
+    },
+
+    "hierarchy": {
+      "display": {
+        "size": "28px",
+        "color": "#3d3d3d",
+        "usage": "Screen titles in header sections",
+        "contexts": ["통계 screen title", "서재 screen title"]
+      },
+      "h1": {
+        "size": "24px",
+        "color": "#3d3d3d",
+        "usage": "Primary section headings, library title",
+        "contexts": ["내 서재", "Book titles in detail views"]
+      },
+      "h2": {
+        "size": "22px",
+        "color": "#3d3d3d",
+        "usage": "Sub-section headings",
+        "contexts": ["복습 히스토리", "Feature section titles"]
+      },
+      "h3": {
+        "size": "20px",
+        "color": "#3d3d3d",
+        "usage": "Card titles, tab content headers",
+        "contexts": ["과거의 나를 다시 만나는 시간", "추가하기 bottom sheet title"]
+      },
+      "h4": {
+        "size": "18px",
+        "color": "#3d3d3d",
+        "usage": "Component titles, card headers",
+        "contexts": ["오늘의 복습", "Booknote header", "Card section titles"]
+      },
+      "bodyLarge": {
+        "size": "16px",
+        "color": "#3d3d3d",
+        "usage": "Important body text, action menu items",
+        "contexts": ["책 추가 label", "Action menu item titles", "Emphasized content"]
+      },
+      "body": {
+        "size": "15px",
+        "color": "#3d3d3d",
+        "lineHeight": "relaxed (1.625)",
+        "usage": "Primary content text, quotes, review content",
+        "contexts": [
+          "Quote content in review cards",
+          "Book titles in grid",
+          "Primary button text",
+          "Main reading content"
+        ]
+      },
+      "bodySmall": {
+        "size": "14px",
+        "color": "#3d3d3d",
+        "usage": "Standard body text, labels, category pills",
+        "contexts": [
+          "Preview card content",
+          "Date badge text",
+          "Filter tab labels",
+          "Answer button text",
+          "Secondary descriptions"
+        ]
+      },
+      "caption": {
+        "size": "13px",
+        "color": "#717182",
+        "usage": "Metadata, helper text, descriptions",
+        "contexts": [
+          "기억을 다시 만날 시간이에요",
+          "Action menu descriptions",
+          "Book metadata",
+          "Previous answer indicators",
+          "Secondary action labels"
+        ]
+      },
+      "small": {
+        "size": "12px",
+        "color": "#717182" ,
+        "usage": "Very small metadata, author names",
+        "contexts": [
+          "Author names in library cards",
+          "Small statistics labels",
+          "Timestamp text"
+        ]
+      },
+      "tiny": {
+        "size": "11px",
+        "color": "#a1a1aa",
+        "usage": "Tertiary information, badges, counts",
+        "contexts": [
+          "Answer tag labels",
+          "Badge text in small cards"
+        ]
+      },
+      "micro": {
+        "size": "10px",
+        "usage": "Navigation labels, very small UI text",
+        "contexts": [
+          "Bottom navigation labels (홈, 복습, 서재, 통계)"
+        ]
+      }
+    }
+  },
+
+  "spacing": {
+    "containerPadding": {
+      "horizontal": "16px (px-4)",
+      "usage": "Standard horizontal padding for screen content"
+    },
+    "verticalRhythm": {
+      "xs": "8px (2)",
+      "sm": "12px (3)",
+      "md": "16px (4)",
+      "lg": "24px (6)",
+      "xl": "32px (8)"
+    },
+    "componentGaps": {
+      "card": "24px (mb-6)",
+      "cardInternal": "16px (mb-4)",
+      "list": "12px (space-y-3 or gap-3)",
+      "inline": "8px (gap-2)"
+    }
+  },
+
+  "borderRadius": {
+    "values": {
+      "sm": "8px (rounded-lg)",
+      "md": "12px (rounded-xl)",
+      "lg": "16px (rounded-2xl)",
+      "xl": "24px (rounded-3xl)",
+      "full": "9999px (rounded-full)"
+    },
+    "usage": {
+      "rounded-lg": "Small icons containers, input elements, search bars",
+      "rounded-xl": "Standard buttons, badges, date pickers, icon backgrounds",
+      "rounded-2xl": "Cards, nested content areas, action menu items, tabs",
+      "rounded-3xl": "Major cards, bottom sheets, primary containers, screen-level cards",
+      "rounded-full": "Circular buttons, pills, navigation items, category filters, iPhone home indicator"
+    }
+  },
+
+  "shadows": {
+    "sm": {
+      "value": "shadow-sm",
+      "css": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+      "usage": "Subtle depth for small elements",
+      "contexts": ["Completion state icon container", "Book cover images"]
+    },
+    "md": {
+      "value": "shadow-md",
+      "css": "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+      "usage": "Standard card elevation, primary buttons",
+      "contexts": [
+        "Primary action buttons (복습하러 가기, 내용 확인하기)",
+        "Book cards on hover",
+        "Action menu items on hover"
+      ]
+    },
+    "lg": {
+      "value": "shadow-lg",
+      "css": "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+      "usage": "Prominent elements, floating buttons",
+      "contexts": [
+        "Floating add button (center navigation)",
+        "Today review preview card",
+        "Book covers on hover state"
+      ]
+    },
+    "2xl": {
+      "value": "shadow-2xl",
+      "css": "0 25px 50px -12px rgb(0 0 0 / 0.25)",
+      "usage": "Bottom sheets, modals",
+      "contexts": ["Bottom sheet container", "Modal overlays"]
+    }
+  },
+
+  "componentArchitecture": {
+    "navigationComponents": {
+      "bottomNavigation": {
+        "container": {
+          "position": "fixed bottom-0",
+          "background": "#ffffff",
+          "borderTop": "1px solid #e9e9e9",
+          "zIndex": 30,
+          "maxWidth": "428px",
+          "padding": "4px"
+        },
+        "navItem": {
+          "default": {
+            "padding": "8px 12px (px-3 py-2)",
+            "minWidth": "60px",
+            "borderRadius": "12px (rounded-lg)",
+            "iconSize": "24px (w-6 h-6)",
+            "labelSize": "10px",
+            "color": "#a1a1aa"
           },
-          "filterTab": {
-            "activeBg": "#4E4036",
-            "activeText": "#FFFFFF",
-            "inactiveBg": "#FFFFFF",
-            "inactiveText": "#4A4A4A",
-            "borderRadius": "6px"
+          "active": {
+            "color": "#5d4a3a"
+          },
+          "hover": {
+            "color": "#717182"
+          },
+          "active_interaction": {
+            "background": "#f3f3f5"
           }
         },
-        "progressBar": {
-          "trackColor": "#EAEAEA",
-          "fillColor": "#4E4036",
-          "height": "6px",
-          "borderRadius": "3px"
+        "centerButton": {
+          "size": "48px (w-12 h-12)",
+          "background": "linear-gradient(to-br, #5d4a3a, #4d3a2a)",
+          "borderRadius": "rounded-full",
+          "iconSize": "24px (w-6 h-6)",
+          "iconColor": "#ffffff",
+          "elevation": "shadow-lg",
+          "offset": "-24px (mt-6 upward)",
+          "hover": {
+            "background": "#4d3a2a",
+            "transform": "scale(0.95)"
+          }
+        },
+        "homeIndicator": {
+          "width": "128px (w-32)",
+          "height": "4px (h-1)",
+          "background": "#3d3d3d",
+          "borderRadius": "rounded-full",
+          "position": "centered, 20px from bottom"
+        }
+      },
+
+      "header": {
+        "container": {
+          "background": "#ffffff",
+          "borderBottom": "1px solid #f0f0f0",
+          "padding": "12px 16px (py-3 px-4)",
+          "position": "sticky top-0",
+          "zIndex": 10
+        },
+        "logo": {
+          "size": "32px (w-8 h-8)",
+          "background": "#5d4a3a",
+          "borderRadius": "8px (rounded-lg)",
+          "icon": "📚",
+          "fontSize": "14px"
+        },
+        "title": {
+          "fontSize": "18px",
+          "color": "#3d3d3d"
+        },
+        "iconButtons": {
+          "notification": {
+            "size": "36px (w-9 h-9)",
+            "background": "#f3f3f5",
+            "borderRadius": "rounded-full",
+            "iconSize": "18px",
+            "iconColor": "#5d4a3a",
+            "hover": {
+              "background": "#e9e9ea",
+              "transform": "scale(0.95)"
+            }
+          },
+          "profile": {
+            "size": "36px (w-9 h-9)",
+            "background": "#5d4a3a",
+            "borderRadius": "rounded-full",
+            "iconSize": "18px",
+            "iconColor": "#ffffff",
+            "hover": {
+              "background": "#4d3a2a",
+              "transform": "scale(0.95)"
+            }
+          }
+        }
+      },
+
+      "tabNavigation": {
+        "container": {
+          "borderBottom": "1px solid #e9e9e9",
+          "background": "#ffffff"
+        },
+        "tab": {
+          "padding": "16px (py-4)",
+          "flex": "flex-1",
+          "iconSize": "16px (w-4 h-4)",
+          "fontSize": "15px",
+          "gap": "8px (gap-2)",
+          "default": {
+            "color": "#a1a1aa"
+          },
+          "active": {
+            "color": "#5d4a3a",
+            "indicator": {
+              "height": "2px (h-0.5)",
+              "background": "#5d4a3a",
+              "position": "absolute bottom-0"
+            }
+          }
+        }
+      }
+    },
+
+    "cardComponents": {
+      "reviewCard": {
+        "container": {
+          "background": "#ffffff",
+          "borderRadius": "24px (rounded-3xl)",
+          "border": "2px solid #e9e9e9",
+          "padding": "24px (p-6)",
+          "shadow": "shadow-sm",
+          "minHeight": "400px"
+        },
+        "iconBadge": {
+          "size": "40px (w-10 h-10)",
+          "background": "#f0f5f0",
+          "borderRadius": "12px (rounded-xl)",
+          "iconSize": "20px (w-5 h-5)",
+          "iconColor": "#4a7c59",
+          "position": "flex justify-end"
+        },
+        "content": {
+          "fontSize": "15px",
+          "color": "#3d3d3d",
+          "lineHeight": "relaxed (1.625)",
+          "marginBottom": "16px (mb-4)"
+        },
+        "metadata": {
+          "fontSize": "13px",
+          "color": "#717182",
+          "gap": "8px (gap-2)",
+          "separator": "·"
+        },
+        "thoughtSection": {
+          "background": "#f8f8f8",
+          "borderRadius": "16px (rounded-2xl)",
+          "padding": "16px (p-4)",
+          "marginBottom": "24px (mb-6)"
+        },
+        "indicator": {
+          "defaultDot": {
+            "size": "6px (w-1.5 h-1.5)",
+            "background": "#e9e9e9",
+            "borderRadius": "rounded-full"
+          },
+          "activeDot": {
+            "size": "6px height, 16px width (h-1.5 w-4)",
+            "background": "#5d4a3a",
+            "borderRadius": "rounded-full",
+            "transition": "all"
+          },
+          "gap": "6px (gap-1.5)"
+        },
+        "answerButtons": {
+          "grid": "grid-cols-2",
+          "gap": "8px (gap-2)",
+          "button": {
+            "padding": "12px 16px (py-3 px-4)",
+            "borderRadius": "12px (rounded-xl)",
+            "background": "#f8f8f8",
+            "fontSize": "14px",
+            "hover": {
+              "background": "#e9e9e9"
+            },
+            "active": {
+              "background": "#d9d9d9"
+            }
+          },
+          "warningButton": {
+            "color": "#d97706"
+          }
+        },
+        "actionLinks": {
+          "fontSize": "13px",
+          "color": "#717182",
+          "gap": "16px (gap-4)",
+          "separator": "· (#e9e9e9)",
+          "hover": {
+            "color": "#3d3d3d"
+          }
+        }
+      },
+
+      "previewCard": {
+        "container": {
+          "background": "#ffffff",
+          "borderRadius": "24px (rounded-3xl)",
+          "border": "2px solid rgba(93, 74, 58, 0.1)",
+          "padding": "24px (p-6)",
+          "shadow": "shadow-lg"
+        },
+        "header": {
+          "title": {
+            "fontSize": "18px",
+            "color": "#3d3d3d",
+            "marginBottom": "4px (mb-1)"
+          },
+          "subtitle": {
+            "fontSize": "13px",
+            "color": "#717182"
+          },
+          "iconContainer": {
+            "size": "48px (w-12 h-12)",
+            "background": "linear-gradient(to-br, #5d4a3a, #4d3a2a)",
+            "borderRadius": "16px (rounded-2xl)",
+            "iconSize": "24px (w-6 h-6)",
+            "iconColor": "#ffffff"
+          }
+        },
+        "previewContent": {
+          "background": "#f8f8f8",
+          "borderRadius": "16px (rounded-2xl)",
+          "padding": "16px (p-4)",
+          "marginBottom": "16px (mb-4)",
+          "iconContainer": {
+            "size": "32px (w-8 h-8)",
+            "background": "#ffffff",
+            "borderRadius": "8px (rounded-lg)",
+            "iconSize": "16px (w-4 h-4)",
+            "iconColor": "#5d4a3a"
+          },
+          "text": {
+            "fontSize": "14px",
+            "color": "#3d3d3d",
+            "lineHeight": "relaxed",
+            "lineClamp": 2
+          },
+          "author": {
+            "fontSize": "12px",
+            "color": "#a1a1aa"
+          }
+        },
+        "ctaButton": {
+          "background": "#5d4a3a",
+          "borderRadius": "12px (rounded-xl)",
+          "padding": "14px (py-3.5)",
+          "fontSize": "15px",
+          "color": "#ffffff",
+          "shadow": "shadow-md",
+          "hover": {
+            "background": "#4d3a2a"
+          },
+          "active": {
+            "transform": "scale(0.98)"
+          }
+        }
+      },
+
+      "historyCard": {
+        "dateHeader": {
+          "background": "#ffffff",
+          "border": "1px solid #e9e9e9",
+          "borderRadius": "16px (rounded-2xl)",
+          "padding": "16px (p-4)",
+          "marginBottom": "8px (mb-2)",
+          "hover": {
+            "border": "1px solid rgba(93, 74, 58, 0.3)"
+          },
+          "dateIcon": {
+            "size": "48px (w-12 h-12)",
+            "background": "#f8f8f8",
+            "borderRadius": "12px (rounded-xl)",
+            "fontSize": {
+              "day": "18px",
+              "month": "10px"
+            },
+            "color": {
+              "day": "#3d3d3d",
+              "month": "#a1a1aa"
+            }
+          },
+          "title": {
+            "fontSize": "15px",
+            "color": "#3d3d3d",
+            "marginBottom": "4px (mb-1)"
+          },
+          "count": {
+            "fontSize": "12px",
+            "color": "#717182"
+          },
+          "chevron": {
+            "size": "20px (w-5 h-5)",
+            "color": "#a1a1aa",
+            "rotation": {
+              "expanded": "0deg",
+              "collapsed": "180deg"
+            }
+          }
+        },
+        "item": {
+          "background": "#ffffff",
+          "border": "1px solid #e9e9e9",
+          "borderRadius": "16px (rounded-2xl)",
+          "padding": "16px (p-4)",
+          "hover": {
+            "border": "1px solid rgba(93, 74, 58, 0.3)"
+          },
+          "content": {
+            "fontSize": "14px",
+            "color": "#3d3d3d",
+            "lineHeight": "relaxed",
+            "lineClamp": 3,
+            "marginBottom": "12px (mb-3)"
+          },
+          "metadata": {
+            "fontSize": "12px",
+            "color": "#717182",
+            "gap": "8px (gap-2)"
+          },
+          "answerTag": {
+            "padding": "4px 12px (px-3 py-1)",
+            "borderRadius": "rounded-full",
+            "fontSize": "11px",
+            "variants": {
+              "hard": {
+                "text": "#d97706",
+                "background": "#fef3c7"
+              },
+              "easy": {
+                "text": "#16a34a",
+                "background": "#dcfce7"
+              },
+              "remember": {
+                "text": "#2563eb",
+                "background": "#dbeafe"
+              },
+              "default": {
+                "text": "#717182",
+                "background": "#f3f3f5"
+              }
+            }
+          }
+        }
+      },
+
+      "statisticsCard": {
+        "container": {
+          "background": "#ffffff",
+          "border": "1px solid #e9e9e9",
+          "borderRadius": "16px (rounded-2xl)",
+          "padding": "16px (p-4)",
+          "textAlign": "center"
+        },
+        "value": {
+          "fontSize": "28px",
+          "color": "#3d3d3d",
+          "marginBottom": "4px (mb-1)"
+        },
+        "label": {
+          "fontSize": "12px",
+          "color": "#a1a1aa"
+        },
+        "grid": {
+          "columns": "grid-cols-3",
+          "gap": "12px (gap-3)"
+        }
+      }
+    },
+
+    "libraryComponents": {
+      "searchBar": {
+        "container": {
+          "background": "#f3f3f5",
+          "borderRadius": "12px (rounded-xl)",
+          "padding": "12px 16px (py-3 pr-4, pl-11 for icon space)",
+          "border": "none"
+        },
+        "icon": {
+          "size": "20px (w-5 h-5)",
+          "color": "#a1a1aa",
+          "position": "absolute left-12px top-50%"
+        },
+        "input": {
+          "fontSize": "15px",
+          "color": "#3d3d3d",
+          "placeholder": {
+            "color": "#a1a1aa",
+            "text": "책 제목이나 저자로 검색..."
+          },
+          "focus": {
+            "outline": "none",
+            "ring": "2px solid rgba(93, 74, 58, 0.2)"
+          }
+        }
+      },
+
+      "categoryPills": {
+        "container": {
+          "display": "flex",
+          "gap": "8px (gap-2)",
+          "overflowX": "auto",
+          "scrollbar": "hidden"
+        },
+        "pill": {
+          "padding": "8px 16px (px-4 py-2)",
+          "borderRadius": "rounded-full",
+          "fontSize": "14px",
+          "whiteSpace": "nowrap",
+          "default": {
+            "background": "#f3f3f5",
+            "color": "#717182",
+            "hover": {
+              "background": "#e9e9ea"
+            }
+          },
+          "active": {
+            "background": "#5d4a3a",
+            "color": "#ffffff"
+          }
+        }
+      },
+
+      "bookCard": {
+        "container": {
+          "width": "128px (w-32)",
+          "flexShrink": 0,
+          "active": {
+            "transform": "scale(0.95)"
+          }
+        },
+        "coverImage": {
+          "aspectRatio": "3/4",
+          "borderRadius": "12px (rounded-xl)",
+          "overflow": "hidden",
+          "shadow": "shadow-md",
+          "hover": {
+            "shadow": "shadow-lg"
+          }
+        },
+        "title": {
+          "fontSize": "15px",
+          "color": "#3d3d3d",
+          "lineClamp": 2,
+          "lineHeight": "tight",
+          "marginBottom": "2px (mb-0.5)"
+        },
+        "subtitle": {
+          "fontSize": "13px",
+          "color": "#a1a1aa",
+          "lineClamp": 1,
+          "marginBottom": "2px (mb-0.5)"
+        },
+        "author": {
+          "fontSize": "12px",
+          "color": "#717182",
+          "lineClamp": 1
+        }
+      }
+    },
+
+    "modalComponents": {
+      "bottomSheet": {
+        "overlay": {
+          "background": "rgba(0, 0, 0, 0.5)",
+          "position": "fixed inset-0",
+          "zIndex": 40
+        },
+        "container": {
+          "position": "fixed bottom-0",
+          "background": "#ffffff",
+          "borderRadius": "24px (rounded-t-3xl)",
+          "shadow": "shadow-2xl",
+          "zIndex": 50,
+          "maxWidth": "428px",
+          "animation": {
+            "name": "slide-up",
+            "duration": "0.3s",
+            "easing": "ease-out",
+            "from": "translateY(100%)",
+            "to": "translateY(0)"
+          }
+        },
+        "handle": {
+          "width": "40px (w-10)",
+          "height": "4px (h-1)",
+          "background": "#e9e9e9",
+          "borderRadius": "rounded-full",
+          "margin": "12px auto 8px (pt-3 pb-2)"
+        },
+        "header": {
+          "padding": "16px 24px (px-6 py-4)",
+          "borderBottom": "1px solid #e9e9e9",
+          "title": {
+            "fontSize": "20px",
+            "color": "#3d3d3d"
+          },
+          "closeButton": {
+            "size": "32px (w-8 h-8)",
+            "borderRadius": "rounded-full",
+            "iconSize": "20px (w-5 h-5)",
+            "iconColor": "#717182",
+            "hover": {
+              "background": "#f3f3f5"
+            }
+          }
+        },
+        "content": {
+          "padding": "16px (p-4)"
+        },
+        "footer": {
+          "height": "32px (h-8)",
+          "purpose": "iPhone home indicator space"
+        }
+      },
+
+      "actionMenuItem": {
+        "container": {
+          "background": "#ffffff",
+          "border": "1px solid #e9e9e9",
+          "borderRadius": "16px (rounded-2xl)",
+          "padding": "16px (p-4)",
+          "hover": {
+            "border": "1px solid rgba(93, 74, 58, 0.3)",
+            "shadow": "shadow-md"
+          },
+          "active": {
+            "transform": "scale(0.98)"
+          }
+        },
+        "icon": {
+          "size": "48px (w-12 h-12)",
+          "borderRadius": "12px (rounded-xl)",
+          "iconSize": "24px (w-6 h-6)",
+          "iconColor": "#ffffff",
+          "variants": {
+            "book": "#5d4a3a",
+            "note": "#2563eb",
+            "quote": "#7c3aed"
+          }
+        },
+        "title": {
+          "fontSize": "16px",
+          "color": "#3d3d3d",
+          "marginBottom": "4px (mb-1)"
+        },
+        "description": {
+          "fontSize": "13px",
+          "color": "#717182"
+        }
+      }
+    },
+
+    "formComponents": {
+      "button": {
+        "primary": {
+          "background": "#5d4a3a",
+          "color": "#ffffff",
+          "borderRadius": "12px (rounded-xl)",
+          "padding": "12px-14px vertical, 32px horizontal",
+          "fontSize": "15px",
+          "shadow": "shadow-md",
+          "hover": {
+            "background": "#4d3a2a"
+          },
+          "active": {
+            "transform": "scale(0.98)"
+          },
+          "disabled": {
+            "opacity": 0.5,
+            "cursor": "not-allowed"
+          }
+        },
+        "secondary": {
+          "background": "#f8f8f8",
+          "color": "#3d3d3d",
+          "borderRadius": "12px (rounded-xl)",
+          "padding": "12px 16px (py-3 px-4)",
+          "fontSize": "14px",
+          "hover": {
+            "background": "#e9e9e9"
+          },
+          "active": {
+            "background": "#d9d9d9"
+          }
+        },
+        "icon": {
+          "size": "36px-48px (w-9 to w-12)",
+          "borderRadius": "rounded-full",
+          "hover": {
+            "background": "varies by type"
+          },
+          "active": {
+            "transform": "scale(0.95)"
+          }
+        }
+      },
+
+      "dateBadge": {
+        "container": {
+          "background": "#f8f8f8",
+          "border": "1px solid #e9e9e9",
+          "borderRadius": "12px (rounded-xl)",
+          "padding": "8px 16px (px-4 py-2)",
+          "gap": "8px (gap-2)"
+        },
+        "icon": {
+          "size": "16px (w-4 h-4)",
+          "color": "#5d4a3a"
+        },
+        "label": {
+          "fontSize": "14px",
+          "color": "#3d3d3d"
         }
       }
     }
+  },
+
+  "interactionPatterns": {
+    "transitions": {
+      "standard": "transition-all",
+      "colors": "transition-colors",
+      "transform": "transition-transform",
+      "duration": "default (150ms-300ms)"
+    },
+
+    "hoverStates": {
+      "buttons": {
+        "colorChange": "Background darkens slightly",
+        "examples": [
+          "Primary: #5d4a3a → #4d3a2a",
+          "Secondary: #f8f8f8 → #e9e9e9",
+          "Neutral: #f3f3f5 → #e9e9ea"
+        ]
+      },
+      "cards": {
+        "borderChange": "#e9e9e9 → rgba(93, 74, 58, 0.3)",
+        "shadowIncrease": "shadow-md → shadow-lg"
+      },
+      "text": {
+        "colorChange": "#717182 → #3d3d3d"
+      }
+    },
+
+    "activeStates": {
+      "scale": "scale-[0.98] or scale-95",
+      "backgroundDarken": "Additional 10-15% darker",
+      "timing": "Immediate visual feedback"
+    },
+
+    "focusStates": {
+      "inputs": "2px ring with 20% brand opacity",
+      "outline": "outline-ring/50 (global)"
+    },
+
+    "loadingStates": {
+      "shimmer": "Not currently implemented",
+      "spinner": "Not currently implemented",
+      "placeholder": "Empty state cards with centered emoji + text"
+    },
+
+    "touchTargets": {
+      "minimum": "44px (iOS guidelines)",
+      "buttons": "Typically 36px-48px height",
+      "navigation": "48px-60px touch area including padding"
+    }
+  },
+
+  "layoutPatterns": {
+    "maxWidth": "428px (max-w-[428px])",
+    "screenPadding": "16px horizontal (px-4)",
+    "screenBackground": "#ffffff or #fafafa (stats screen)",
+
+    "scrollBehavior": {
+      "hideScrollbar": "Custom CSS with scrollbar-hide class",
+      "overflowHandling": "overflow-y-auto with pb-24 for bottom nav clearance"
+    },
+
+    "bottomNavClearance": {
+      "padding": "96px (pb-24)",
+      "purpose": "Ensure content not hidden behind fixed bottom navigation"
+    },
+
+    "stickyPositioning": {
+      "header": "sticky top-0 z-10",
+      "bottomNav": "fixed bottom-0 z-30"
+    }
+  },
+
+  "responsiveConsiderations": {
+    "targetRange": "375px - 428px",
+    "container": "max-w-[428px] mx-auto",
+    "scalingStrategy": "Fixed pixel values with container constraint",
+    "textScaling": "Respects user's font size preferences via rem"
+  },
+
+  "accessibility": {
+    "colorContrast": {
+      "primary": "#3d3d3d on #ffffff - WCAG AAA",
+      "secondary": "#717182 on #ffffff - WCAG AA",
+      "brand": "#5d4a3a on #ffffff - WCAG AA"
+    },
+    "focusIndicators": "Global outline-ring/50",
+    "touchTargets": "Minimum 44px for critical actions",
+    "semanticHTML": "Proper button and nav elements"
+  },
+
+  "animationSpecifications": {
+    "slideUp": {
+      "keyframes": {
+        "from": "translateY(100%)",
+        "to": "translateY(0)"
+      },
+      "duration": "0.3s",
+      "easing": "ease-out",
+      "usage": "Bottom sheet entrance"
+    },
+    "scale": {
+      "active": "scale(0.95) or scale(0.98)",
+      "duration": "immediate",
+      "usage": "Button press feedback"
+    }
+  },
+
+  "designDecisions": {
+    "brandIdentity": "Warm, library-inspired aesthetic with brown tones suggesting paper, wood, and classic books",
+    "userExperience": "Calm, focused reading environment with gentle interactions and minimal cognitive load",
+    "visualHierarchy": "Clear card-based structure with generous white space and subtle depth",
+    "colorStrategy": "Limited palette for consistency - browns for brand, grays for structure, semantic colors for state",
+    "typographyStrategy": "System fonts for familiarity and performance, size steps for clear hierarchy",
+    "interactionFeedback": "Subtle scale transforms and color shifts, never jarring"
+  },
+
+  "implementationGuidelines": {
+    "colorApplication": [
+      "Use #5d4a3a ONLY for brand elements, primary actions, and active states",
+      "Use #3d3d3d for primary text content, never for backgrounds",
+      "Use #717182 for secondary text, metadata, and inactive navigation",
+      "Use #a1a1aa for tertiary information and placeholders",
+      "Apply gradients ONLY to icon containers and completion states",
+      "Never mix button colors with text colors"
+    ],
+    "spacingConsistency": [
+      "Maintain 16px horizontal padding (px-4) for all screen content",
+      "Use 24px (mb-6) between major card sections",
+      "Use 16px (mb-4) within card sections",
+      "Use 12px (gap-3) for list items and grids",
+      "Use 8px (gap-2) for inline elements"
+    ],
+    "borderRadiusLogic": [
+      "rounded-3xl for screen-level cards and bottom sheets",
+      "rounded-2xl for standard cards and nested containers",
+      "rounded-xl for buttons, badges, and small containers",
+      "rounded-lg for tiny icons and inputs",
+      "rounded-full for pills, circular buttons, and navigation items"
+    ],
+    "shadowApplication": [
+      "shadow-sm for subtle depth on small elements",
+      "shadow-md for standard cards and hover states",
+      "shadow-lg for floating buttons and featured cards",
+      "shadow-2xl for modals and bottom sheets",
+      "Never stack multiple shadows"
+    ],
+    "avoidCommonMistakes": [
+      "DO NOT use container gradients on individual icons",
+      "DO NOT apply button background colors to card backgrounds",
+      "DO NOT use navigation text colors for body content",
+      "DO NOT forget 96px bottom padding (pb-24) on scrollable screens",
+      "DO NOT use border-radius smaller than rounded-lg except for very specific cases",
+      "DO NOT apply shadows to child elements when parent has shadow"
+    ]
   }
 }

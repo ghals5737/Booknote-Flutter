@@ -1,699 +1,577 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../theme/app_theme.dart';
-import '../models/review/review_item.dart';
-import '../data/mock_data.dart';
 
-/// 복습 관리 화면
-class ReviewScreen extends ConsumerStatefulWidget {
+import 'package:flutter/material.dart';
+
+class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key});
 
   @override
-  ConsumerState<ReviewScreen> createState() => _ReviewScreenState();
+  State<ReviewScreen> createState() => _ReviewScreenState();
 }
 
-class _ReviewScreenState extends ConsumerState<ReviewScreen> {
-  int _currentIndex = 0; // 현재 복습 중인 항목 인덱스
-  bool _isReminderMode = false; // 리마인더 모드 여부 (false = 리스트 모드)
-  bool _showContent = false; // 리마인더 모드에서 내용 표시 여부
-  List<ReviewItem> _reviewItems = [];
+class _ReviewScreenState extends State<ReviewScreen> {
+  final Map<int, bool> _showContentMap = {};
+  final Map<int, String> _selectedAnswers = {};
+  late PageController _pageController;
+  int _currentPage = 0;
+  String _selectedFilter = '전체';
 
   @override
   void initState() {
     super.initState();
-    _loadReviewItems();
-  }
-
-  void _loadReviewItems() {
-    setState(() {
-      _reviewItems = MockReviewData.getReviewItems();
-    });
-  }
-
-  void _toggleViewMode() {
-    setState(() {
-      _isReminderMode = !_isReminderMode;
-      _currentIndex = 0;
-      _showContent = false;
-    });
-  }
-
-  void _completeReview() {
-    // 복습 완료 처리
-    if (_currentIndex < _reviewItems.length - 1) {
-      setState(() {
-        _currentIndex++;
-        _showContent = false;
+    _pageController = PageController()
+      ..addListener(() {
+        if (_pageController.page?.round() != _currentPage) {
+          setState(() {
+            _currentPage = _pageController.page!.round();
+          });
+        }
       });
-    } else {
-      // 모든 복습 완료
-      setState(() {
-        _isReminderMode = false;
-        _currentIndex = 0;
-        _showContent = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('복습을 완료했습니다!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
   }
 
-  void _previousItem() {
-    if (_currentIndex > 0) {
-      setState(() {
-        _currentIndex--;
-        _showContent = false;
-      });
-    }
-  }
-
-  void _nextItem() {
-    if (_currentIndex < _reviewItems.length - 1) {
-      setState(() {
-        _currentIndex++;
-        _showContent = false;
-      });
-    }
-  }
-
-  void _toggleContent() {
-    setState(() {
-      _showContent = !_showContent;
-    });
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isReminderMode && _reviewItems.isNotEmpty) {
-      return _buildReminderView();
-    }
-    return _buildListView();
-  }
-
-  /// 리스트 뷰
-  Widget _buildListView() {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundCanvas,
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppTheme.brandBlue,
-                borderRadius: BorderRadius.circular(8),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F8F8),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          toolbarHeight: 60,
+          backgroundColor: Colors.white,
+          title: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF5D4A3A),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.book, color: Colors.white, size: 20),
               ),
-              child: const Icon(
-                Icons.book,
-                color: Colors.white,
-                size: 20,
+              const SizedBox(width: 8),
+              const Text(
+                'Booknote',
+                style: TextStyle(
+                  color: Color(0xFF3D3D3D),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications_none, color: Color(0xFF3D3D3D)),
+              onPressed: () {},
             ),
-            const SizedBox(width: 8),
-            const Text(
-              'Booknote',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+            IconButton(
+              icon: const Icon(Icons.person_outline, color: Color(0xFF3D3D3D)),
+              onPressed: () {},
             ),
           ],
-        ),
-        centerTitle: true,
-        backgroundColor: AppTheme.surfaceWhite,
-        elevation: 0,
-        actions: [
-          // 보기 모드 변경 버튼
-          IconButton(
-            icon: Icon(
-              _isReminderMode ? Icons.list : Icons.view_module,
-              color: AppTheme.headingDark,
-            ),
-            onPressed: _toggleViewMode,
-            tooltip: _isReminderMode ? '리스트 모드' : '리마인더 모드',
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: '오늘의 복습'),
+              Tab(text: '복습 기록'),
+            ],
+            labelColor: Color(0xFF3D3D3D),
+            unselectedLabelColor: Color(0xFF717182),
+            indicatorColor: Color(0xFF5D4A3A),
           ),
-          // 프로필 버튼 (마지막)
-          IconButton(
-            icon: const Icon(
-              Icons.person_outline,
-              color: AppTheme.headingDark,
-            ),
-            onPressed: () {
-              context.push('/profile');
+        ),
+        body: TabBarView(
+          children: [
+            _buildTodayReview(),
+            _buildReviewHistory(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTodayReview() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE9E9E9)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.calendar_today, size: 16, color: Color(0xFF717182)),
+                    SizedBox(width: 8),
+                    Text(
+                      '오늘',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF3D3D3D)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                '✨ 과거의 나를 다시 만나는 시간',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3D3D3D),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: 2,
+            itemBuilder: (context, index) {
+              return _buildReviewCard(index);
             },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReviewCard(int index) {
+    final bool isContentVisible = _showContentMap[index] ?? false;
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: const BorderSide(color: Color(0xFFE9E9E9)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: isContentVisible ? _buildRevealedContent(index) : _buildPromptContent(index),
+      ),
+    );
+  }
+
+  Widget _buildPromptContent(int index) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: IntrinsicHeight(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F5F0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.eco_outlined, color: Color(0xFF4A7C59)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 10)]),
+                      child: const Column(
+                        children: [
+                          Text('bbjb,', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF3D3D3D))),
+                          SizedBox(height: 4),
+                          Text('bbjb', style: TextStyle(fontSize: 14, color: Color(0xFF717182))),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '이 책에서 당신이 남긴 문장을 기억하시나요?',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF717182)),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(2, (i) {
+                        return Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _currentPage == i ? const Color(0xFF3D3D3D) : const Color(0xFFE9E9E9),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '지난번엔 어려웠어요라고 하셨어요',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF717182)),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _showContentMap[index] = true;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5D4A3A),
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text(
+                        '내용 확인하기',
+                        style: TextStyle(fontSize: 15, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '${_currentPage + 1}/2',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFFA1A1AA)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildRevealedContent(int index) {
+    final selectedAnswer = _selectedAnswers[index];
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F5F0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.eco_outlined, color: Color(0xFF4A7C59)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            '"개조차 낯선 인간에게 제주의 새끼로 여겨지는 저 사람들, 나의 몫, 나의 전부, 나의 분할은 그들이 없이는 존재할 수 없다. 내가 가진 것 중 가장 좋은 것이자, 그들에게서 벗어날 수 없는 이유." ',
+            style: TextStyle(fontSize: 15, color: Color(0xFF3D3D3D), height: 1.6),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '📖 bbjb, bbjb',
+            style: TextStyle(fontSize: 12, color: Color(0xFF717182)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F8F8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('당시 나의 생각', style: TextStyle(fontSize: 14, color: Color(0xFF717182))),
+                  Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF717182)),
+                ],
+              )),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(2, (i) {
+              return Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentPage == i ? const Color(0xFF3D3D3D) : const Color(0xFFE9E9E9),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 30),
+          const Text('얼마나 잘 기억하고 있나요?', style: TextStyle(fontSize: 13, color: Color(0xFF717182)), textAlign: TextAlign.center,),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            childAspectRatio: 2.8,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildAnswerButton(index, '있었어요', selectedAnswer, const Color(0xFFF3F3F5), const Color(0xFF3D3D3D)),
+              _buildAnswerButton(index, '어려웠어요', selectedAnswer, const Color(0xFFFEF3C7), const Color(0xFFD97706)),
+              _buildAnswerButton(index, '기억해요', selectedAnswer, const Color(0xFFDBEAFE), const Color(0xFF2563EB)),
+              _buildAnswerButton(index, '쉬웠어요', selectedAnswer, const Color(0xFFDCFCE7), const Color(0xFF16A34A)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(onPressed: () => setState(() => _showContentMap[index] = false), child: const Text('다시 가리기', style: TextStyle(fontSize: 13, color: Color(0xFF717182)))),
+              const Text('·', style: TextStyle(color: Color(0xFF717182))),
+              TextButton(onPressed: () {}, child: const Text('내용에 보기', style: TextStyle(fontSize: 13, color: Color(0xFF717182)))),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${_currentPage + 1}/2',
+            style: const TextStyle(fontSize: 12, color: Color(0xFFA1A1AA)),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
-      body: _reviewItems.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.refresh,
-                    size: 64,
-                    color: AppTheme.metaLight,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '복습할 항목이 없습니다',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _reviewItems.length,
-              itemBuilder: (context, index) {
-                final item = _reviewItems[index];
-                return _buildReviewCard(item, index);
-              },
-            ),
     );
   }
 
-  /// 복습 카드 (리스트 모드)
-  Widget _buildReviewCard(ReviewItem item, int index) {
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _isReminderMode = true;
-          _currentIndex = index;
-          _showContent = false;
-        });
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceWhite,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppTheme.borderSubtle,
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 우선순위 태그와 복습 횟수
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildPriorityTag(item.priority),
-                Text(
-                  '복습 ${item.reviewCount}회',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.metaLight,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // 책 제목
-            Text(
-              item.bookTitle,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.metaLight,
-              ),
-            ),
-            const SizedBox(height: 8),
-            // 제목 (노트) 또는 인용구 텍스트
-            Text(
-              item.isNote ? item.title : item.text,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.headingDark,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            // 내용 (노트인 경우)
-            if (item.isNote && item.content.isNotEmpty)
-              Text(
-                item.content,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.bodyMedium,
-                  height: 1.5,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            // 인용구 아이콘 (인용구인 경우)
-            if (!item.isNote)
-              Row(
-                children: [
-                  Icon(
-                    Icons.format_quote,
-                    size: 16,
-                    color: AppTheme.brandBlue,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      item.text,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.bodyMedium,
-                        fontStyle: FontStyle.italic,
-                        height: 1.5,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            const SizedBox(height: 12),
-            // 마지막 복습 날짜
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '마지막 복습: ${_formatDate(item.lastReviewDate)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.metaLight,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 우선순위 태그
-  Widget _buildPriorityTag(String priority) {
-    Color backgroundColor;
-    Color textColor;
-
-    switch (priority) {
-      case '높음':
-        backgroundColor = const Color(0xFFFF6B6B);
-        textColor = Colors.white;
-        break;
-      case '보통':
-        backgroundColor = const Color(0xFFFFD93D);
-        textColor = Colors.white;
-        break;
-      default:
-        backgroundColor = AppTheme.borderSubtle;
-        textColor = AppTheme.bodyMedium;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildAnswerButton(int index, String title, String? selectedAnswer, Color selectedBgColor, Color selectedTextColor) {
+    final isSelected = selectedAnswer == title;
+    return TextButton(
+      onPressed: () => setState(() => _selectedAnswers[index] = title),
+      style: TextButton.styleFrom(
+        backgroundColor: isSelected ? selectedBgColor : const Color(0xFFF3F3F5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Text(
-        '우선순위: $priority',
+        title,
         style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: textColor,
+          fontSize: 14,
+          color: isSelected ? selectedTextColor : const Color(0xFF3D3D3D),
+          fontWeight: isSelected? FontWeight.bold: FontWeight.normal
         ),
       ),
     );
   }
 
-  /// 리마인더 뷰
-  Widget _buildReminderView() {
-    if (_reviewItems.isEmpty) return const SizedBox.shrink();
-
-    final item = _reviewItems[_currentIndex];
-    final totalItems = _reviewItems.length;
-    final currentNumber = _currentIndex + 1;
-    final progress = (currentNumber / totalItems) * 100;
-
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundCanvas,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            setState(() {
-              _isReminderMode = false;
-              _currentIndex = 0;
-              _showContent = false;
-            });
-          },
-        ),
-        title: const Text(
-          '복습',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.headingDark,
-          ),
-        ),
-        backgroundColor: AppTheme.surfaceWhite,
-        elevation: 0,
-        actions: [
-          // 보기 모드 변경 버튼
-          IconButton(
-            icon: Icon(
-              _isReminderMode ? Icons.list : Icons.view_module,
-              color: AppTheme.headingDark,
+  // --- 복습 기록 탭 위젯 ---
+  Widget _buildReviewHistory() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFF8F8F8),
+              border: Border.all(color: const Color(0xFFE9E9E9)),
             ),
-            onPressed: _toggleViewMode,
-            tooltip: _isReminderMode ? '리스트 모드' : '리마인더 모드',
+            child: const Icon(Icons.refresh, color: Color(0xFF717182), size: 28),
           ),
-          // 프로필 버튼 (마지막)
-          IconButton(
-            icon: const Icon(
-              Icons.person_outline,
-              color: AppTheme.headingDark,
-            ),
-            onPressed: () {
-              context.push('/profile');
-            },
+          const SizedBox(height: 12),
+          const Text(
+            '복습 히스토리',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF3D3D3D)),
           ),
+          const SizedBox(height: 8),
+          const Text(
+            '꾸준히 복습한 나의 발자취를 살펴보세요',
+            style: TextStyle(fontSize: 14, color: Color(0xFF717182)),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildStatCard('9', '전체 복습'),
+              _buildStatCard('3', '복습한 날'),
+              _buildStatCard('3', '평균 / 일'),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildFilterChip('전체', '9'),
+              const SizedBox(width: 8),
+              _buildFilterChip('노트', '16'),
+              const SizedBox(width: 8),
+              _buildFilterChip('인용구', '15'),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildHistoryGroup(),
         ],
       ),
-      body: Column(
-        children: [
-          // 진행률 표시
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: AppTheme.surfaceWhite,
-            child: Row(
-              children: [
-                Text(
-                  '$currentNumber/$totalItems',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.headingDark,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress / 100,
-                      backgroundColor: AppTheme.borderSubtle,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.brandBlue),
-                      minHeight: 6,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '${progress.toInt()}%',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.headingDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 메인 카드
-          Expanded(
-            child: GestureDetector(
-              onTap: _toggleContent,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceWhite,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppTheme.borderSubtle,
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 우선순위 태그
-                      _buildPriorityTag(item.priority),
-                      const SizedBox(height: 16),
-                      // 복습 횟수
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          '복습 ${item.reviewCount}회',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.metaLight,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // 아이콘 (노트 또는 인용구)
-                      Center(
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: item.isNote
-                                ? AppTheme.brandLightTint
-                                : const Color(0xFFE0E7FF),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            item.isNote ? Icons.note : Icons.format_quote,
-                            size: 32,
-                            color: item.isNote
-                                ? AppTheme.brandBlue
-                                : const Color(0xFF8B5CF6),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // 책 제목
-                      Center(
-                        child: Text(
-                          item.bookTitle,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.metaLight,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // 제목 (노트) 또는 인용구 텍스트
-                      Center(
-                        child: Text(
-                          item.isNote ? item.title : item.text,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.headingDark,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // 내용 표시 (탭했을 때)
-                      if (_showContent) ...[
-                        if (item.isNote && item.content.isNotEmpty)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                item.content,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppTheme.bodyMedium,
-                                  height: 1.5,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                      ] else ...[
-                        // 탭하여 내용 보기 안내
-                        Center(
-                          child: Column(
-                            children: [
-                              Text(
-                                '탭하여 내용 보기',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppTheme.metaLight,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                color: AppTheme.metaLight,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+    );
+  }
+
+  Widget _buildStatCard(String value, String label) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE9E9E9)),
+        ),
+        child: Column(
+          children: [
+            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF3D3D3D))),
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF717182))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String count) {
+    final bool isSelected = _selectedFilter == label;
+    return ChoiceChip(
+      label: Text('$label ($count)'),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() {
+            _selectedFilter = label;
+          });
+        }
+      },
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : const Color(0xFF3D3D3D),
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        fontSize: 14,
+      ),
+      backgroundColor: const Color(0xFFF3F3F5),
+      selectedColor: const Color(0xFF5D4A3A),
+      showCheckmark: false,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(9999),
+        side: const BorderSide(color: Colors.transparent),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    );
+  }
+
+  Widget _buildHistoryGroup() {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.all(16),
+        backgroundColor: Colors.white,
+        collapsedBackgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFE9E9E9)),
+        ),
+        collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFE9E9E9)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F8F8),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE9E9E9)),
               ),
-            ),
-          ),
-          // 하단 버튼
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceWhite,
-              border: Border(
-                top: BorderSide(
-                  color: AppTheme.borderSubtle,
-                  width: 1,
-                ),
-              ),
-            ),
-            child: SafeArea(
-              child: Row(
+              child: const Column(
                 children: [
-                  // 이전 버튼
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _currentIndex > 0 ? _previousItem : null,
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: _currentIndex > 0
-                              ? AppTheme.borderSubtle
-                              : AppTheme.divider,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.arrow_back,
-                            size: 18,
-                            color: _currentIndex > 0
-                                ? AppTheme.bodyMedium
-                                : AppTheme.metaLight,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '이전',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _currentIndex > 0
-                                  ? AppTheme.bodyMedium
-                                  : AppTheme.metaLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // 완료 버튼
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: _completeReview,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.brandBlue,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.check,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            '완료',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // 다음 버튼
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _currentIndex < _reviewItems.length - 1
-                          ? _nextItem
-                          : null,
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: _currentIndex < _reviewItems.length - 1
-                              ? AppTheme.borderSubtle
-                              : AppTheme.divider,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '다음',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: _currentIndex < _reviewItems.length - 1
-                                  ? AppTheme.bodyMedium
-                                  : AppTheme.metaLight,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward,
-                            size: 18,
-                            color: _currentIndex < _reviewItems.length - 1
-                                ? AppTheme.bodyMedium
-                                : AppTheme.metaLight,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  Text('5', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3D3D3D))),
+                  Text('월', style: TextStyle(fontSize: 10, color: Color(0xFF717182))),
                 ],
               ),
             ),
-          ),
+            const SizedBox(width: 16),
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('2026년 1월 5일', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3D3D3D))),
+                SizedBox(height: 4),
+                Text('4개 복습 완료', style: TextStyle(fontSize: 12, color: Color(0xFF717182))),
+              ],
+            ),
+          ],
+        ),
+        children: [
+          _buildHistoryItem(),
+          _buildHistoryItem(),
         ],
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  Widget _buildHistoryItem() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Divider(color: Color(0xFFE9E9E9)),
+          const SizedBox(height: 12),
+          const Text(
+            '"개조차 낯선 인간에게 제주의 새끼로 여겨지는 저 사람들, 나의 몫, 나의 전부, 나의 분할은 그들이 없이는 존재할 수 없다. 내가 가진 것 중 가장 좋은 것이자, 그들에게서 벗어날 수 없는 이유."',
+            style: TextStyle(fontSize: 14, color: Color(0xFF3D3D3D), height: 1.5),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '📖 bbjb, bbjb',
+                style: TextStyle(fontSize: 12, color: Color(0xFF717182)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  '어려웠어요',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFD97706),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
