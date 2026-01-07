@@ -90,10 +90,8 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   }
 
   void _handleNavTap(int index) {
-    // FAB 버튼(인덱스 2)은 탭하지 않음
-    if (index != 2) {
-      widget.onTap(index);
-    }
+    // 모든 네비게이션 아이템은 정상적으로 처리
+    widget.onTap(index);
   }
 
   @override
@@ -117,39 +115,39 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // 서재
+              // 홈
               _buildNavItem(
-                icon: Icons.library_books_outlined,
-                activeIcon: Icons.library_books,
-                label: '서재',
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home,
+                label: '홈',
                 index: 0,
                 isActive: widget.currentIndex == 0,
               ),
-              // 검색
-              _buildNavItem(
-                icon: Icons.search_outlined,
-                activeIcon: Icons.search,
-                label: '검색',
-                index: 1,
-                isActive: widget.currentIndex == 1,
-              ),
-              // FAB 공간 (가운데)
-              const SizedBox(width: 60),
               // 복습
               _buildNavItem(
                 icon: Icons.refresh_outlined,
                 activeIcon: Icons.refresh,
                 label: '복습',
-                index: 3,
-                isActive: widget.currentIndex == 3,
+                index: 1,
+                isActive: widget.currentIndex == 1,
+              ),
+              // FAB 공간 (가운데)
+              const SizedBox(width: 60),
+              // 서재
+              _buildNavItem(
+                icon: Icons.library_books_outlined,
+                activeIcon: Icons.library_books,
+                label: '서재',
+                index: 2,
+                isActive: widget.currentIndex == 2,
               ),
               // 통계
               _buildNavItem(
                 icon: Icons.bar_chart_outlined,
                 activeIcon: Icons.bar_chart,
                 label: '통계',
-                index: 4,
-                isActive: widget.currentIndex == 4,
+                index: 3,
+                isActive: widget.currentIndex == 3,
               ),
             ],
           ),
@@ -159,22 +157,26 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           // 수평 정중앙: 네비게이션 바 너비의 절반에서 FAB 너비의 절반을 뺌
           left: 0,
           right: 0,
-          // 수직 정중앙: 네비게이션 바 높이(70)의 절반에서 FAB 높이(60)의 절반을 뺌
-          // top: -30은 네비게이션 바 위로 30px 올라가서 FAB의 절반이 위로 나오게 함
-          top: 10,
+          // 수직 정중앙: 네비게이션 바 높이(70)의 절반에서 FAB 높이(48)의 절반을 뺌
+          // top: -24는 네비게이션 바 위로 24px 올라가서 FAB의 절반이 위로 나오게 함
+          top: -24,
           child: Center(
             child: GestureDetector(
               onTap: _handleFabTap,
               child: Container(
-                width: 30,
-                height: 30,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.brandBlue,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF5D4A3A), Color(0xFF4D3A2A)], // design.json primary brown gradient
+                  ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.brandBlue.withOpacity(0.3),
-                      blurRadius: 8,
+                      color: const Color(0xFF5D4A3A).withOpacity(0.3),
+                      blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
@@ -182,7 +184,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
                 child: Icon(
                   _showFabMenu ? Icons.close : Icons.add,
                   color: Colors.white,
-                  size: 28,
+                  size: 24,
                 ),
               ),
             ),
@@ -209,15 +211,15 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           children: [
             Icon(
               isActive ? activeIcon : icon,
-              color: isActive ? AppTheme.brandBlue : AppTheme.metaLight,
+              color: isActive ? const Color(0xFF5D4A3A) : AppTheme.metaLight, // design.json primary brown
               size: 24,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
-                color: isActive ? AppTheme.brandBlue : AppTheme.metaLight,
+                fontSize: 10, // design.json micro size
+                color: isActive ? const Color(0xFF5D4A3A) : AppTheme.metaLight, // design.json primary brown
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               ),
             ),

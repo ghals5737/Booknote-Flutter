@@ -1,9 +1,9 @@
-import 'package:booknoteflutter/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../screens/auth/auth_screen.dart';
-import '../screens/search_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/library_screen.dart';
 import '../screens/review_screen.dart';
 import '../screens/statistics_screen.dart';
 import '../screens/profile_screen.dart';
@@ -57,22 +57,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => MainScreen(child: child),
         routes: [
-          // 홈 화면들
+          // 홈 화면
           GoRoute(
             path: '/',
             name: 'home',
-            builder: (context, state) => const DashboardScreen(),
+            builder: (context, state) => const HomeScreen(),
           ),
-          GoRoute(
-            path: '/search',
-            name: 'search',
-            builder: (context, state) => const SearchScreen(),
-          ),
+          // 복습 화면
           GoRoute(
             path: '/review',
             name: 'review',
             builder: (context, state) => const ReviewScreen(),
           ),
+          // 서재 화면
+          GoRoute(
+            path: '/library',
+            name: 'library',
+            builder: (context, state) => const LibraryScreen(),
+          ),
+          // 통계 화면
           GoRoute(
             path: '/statistics',
             name: 'statistics',
@@ -229,12 +232,14 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _getCurrentIndex(String location) {
-    if (location == '/' || location.startsWith('/book/add')) return 0; // 서재
-    if (location.startsWith('/search')) return 1; // 검색
-    if (location.startsWith('/review')) return 3; // 복습
-    if (location.startsWith('/statistics')) return 4; // 통계
+    if (location == '/') return 0; // 홈
+    if (location.startsWith('/review')) return 1; // 복습
+    if (location.startsWith('/library')) return 2; // 서재
+    if (location.startsWith('/statistics')) return 3; // 통계
     // 책 상세, 노트 상세, 인용구 상세 등은 현재 인덱스 유지 (변경하지 않음)
-    return 0; // 기본값: 서재
+    // /book/add는 서재 인덱스 유지
+    if (location.startsWith('/book')) return 2; // 서재
+    return 0; // 기본값: 홈
   }
 
   void _handleNavTap(int index, BuildContext context) {
@@ -244,12 +249,12 @@ class _MainScreenState extends State<MainScreen> {
         router.go('/');
         break;
       case 1:
-        router.go('/search');
-        break;
-      case 3:
         router.go('/review');
         break;
-      case 4:
+      case 2:
+        router.go('/library');
+        break;
+      case 3:
         router.go('/statistics');
         break;
       default:
