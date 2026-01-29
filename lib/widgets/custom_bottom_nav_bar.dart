@@ -159,13 +159,13 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           right: 0,
           // 수직 정중앙: 네비게이션 바 높이(70)의 절반에서 FAB 높이(48)의 절반을 뺌
           // top: -24는 네비게이션 바 위로 24px 올라가서 FAB의 절반이 위로 나오게 함
-          top: -24,
+          top: 6,
           child: Center(
             child: GestureDetector(
               onTap: _handleFabTap,
               child: Container(
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,

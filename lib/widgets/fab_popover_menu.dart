@@ -5,7 +5,6 @@ import '../screens/add_book_screen.dart';
 import '../screens/create_note_screen.dart';
 import '../screens/create_quote_screen.dart';
 import '../models/book/book_detail_response.dart';
-import '../models/book/book.dart';
 import '../providers/book/book_providers.dart';
 
 /// FAB 팝오버 메뉴

@@ -434,7 +434,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   ),
                 )
               else
-                ...historyData.content.map((session) => _buildHistorySession(session)).toList(),
+                ...historyData.content.map((session) => _buildHistorySession(session)),
             ],
           ),
         );
@@ -520,7 +520,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final day = date != null ? date.day : 0;
     final year = date != null ? date.year : 0;
     final formattedDate = date != null 
-        ? '${year}년 ${month}월 ${day}일'
+        ? '$year년 $month월 $day일'
         : '날짜 없음';
     final completedCount = session.reviewItems.length;
 

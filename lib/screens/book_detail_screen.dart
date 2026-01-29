@@ -7,8 +7,6 @@ import '../models/note/note.dart';
 import '../models/quote/quote.dart';
 import '../theme/app_theme.dart';
 import '../providers/book/book_providers.dart';
-import '../providers/note/note_providers.dart';
-import '../providers/quote/quote_providers.dart';
 
 class BookDetailScreen extends ConsumerStatefulWidget {
   final Book book;
@@ -366,10 +364,8 @@ class _ActivityItem extends StatelessWidget {
   const _ActivityItem({
     required this.isNote,
     required this.text,
-    this.content,
     required this.page,
-    required this.createdAt,
-    this.tags,
+    required this.createdAt, this.content, this.tags,
   });
 
   @override

@@ -527,7 +527,7 @@ class _NoteDetailScreenState extends ConsumerState<NoteDetailScreen> {
                                 });
                                 
                                 final bookDetailAsync = ref.read(bookDetailProvider(widget.bookId));
-                                final bookDetail = await bookDetailAsync.when(
+                                final bookDetail = bookDetailAsync.when(
                                   data: (data) => data,
                                   loading: () => null,
                                   error: (_, __) => null,

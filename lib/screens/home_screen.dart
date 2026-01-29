@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
+import '../providers/auth/auth_providers.dart';
 import '../providers/review/review_providers.dart';
-import '../providers/book/book_providers.dart';
-import '../providers/quote/quote_providers.dart';
+import '../providers/home/recent_activity_provider.dart';
 import '../models/book/book.dart';
 
-/// 홈 화면 - 오늘의 복습 미리보기, 최근 읽은 책, 오늘의 인용구
+// design.json: primary brown #5d4a3a, grayLight #f8f8f8, grayMedium #f3f3f5, text #3d3d3d / #717182
+const _primaryBrown = Color(0xFF5D4A3A);
+const _grayLight = Color(0xFFF8F8F8);
+const _grayMedium = Color(0xFFF3F3F5);
+const _textPrimary = Color(0xFF3D3D3D);
+const _textSecondary = Color(0xFF717182);
+
+/// 홈 화면 - design.json + 이미지 레이아웃: 인사말, 액션 카드, 오늘의 복습, 최근 활동
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -23,18 +30,14 @@ class HomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 24),
-              // 인사말
-              _buildGreeting(),
+              _buildGreeting(ref),
               const SizedBox(height: 24),
-              // 오늘의 복습 미리보기
-              _buildTodayReviewPreview(context, ref),
+              _buildActionCards(context),
+              const SizedBox(height: 20),
+              _buildTodayReviewCard(context, ref),
               const SizedBox(height: 24),
-              // 최근 읽은 책
-              _buildRecentBooks(context, ref),
-              const SizedBox(height: 24),
-              // 오늘의 인용구
-              _buildDailyQuote(context, ref),
-              const SizedBox(height: 96), // 하단 네비게이션 공간
+              _buildRecentActivity(context, ref),
+              const SizedBox(height: 96),
             ],
           ),
         ),
@@ -51,14 +54,10 @@ class HomeScreen extends ConsumerWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: const Color(0xFF5D4A3A), // design.json primary brown
+              color: _primaryBrown,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.book,
-              color: Colors.white,
-              size: 20,
-            ),
+            child: const Icon(Icons.menu_book, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 8),
           const Text(
@@ -66,6 +65,7 @@ class HomeScreen extends ConsumerWidget {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
+              color: _textPrimary,
             ),
           ),
         ],
@@ -75,295 +75,261 @@ class HomeScreen extends ConsumerWidget {
       elevation: 0,
       actions: [
         IconButton(
-          icon: const Icon(
-            Icons.notifications_outlined,
-            color: AppTheme.headingDark,
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: const BoxDecoration(
+              color: _grayMedium,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.person_outline, color: _textSecondary, size: 20),
           ),
-          onPressed: () {
-            // 알림 화면으로 이동
-          },
+          onPressed: () => context.push('/profile'),
         ),
         IconButton(
-          icon: const Icon(
-            Icons.person_outline,
-            color: AppTheme.headingDark,
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: const BoxDecoration(
+              color: _grayMedium,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.menu, color: _textSecondary, size: 20),
           ),
           onPressed: () {
-            context.push('/profile');
+            // 메뉴 (필요 시 드로어/바텀시트)
           },
         ),
       ],
     );
   }
 
-  Widget _buildGreeting() {
+  Widget _buildGreeting(WidgetRef ref) {
     final hour = DateTime.now().hour;
     String greeting;
-    if (hour < 12) {
-      greeting = '좋은 아침이에요';
-    } else if (hour < 18) {
-      greeting = '좋은 오후에요';
-    } else {
-      greeting = '좋은 저녁이에요';
-    }
+    if (hour < 12) greeting = '좋은 아침이에요';
+    else if (hour < 18) greeting = '좋은 오후에요';
+    else greeting = '좋은 저녁이에요';
+
+    final user = ref.watch(currentUserProvider);
+    final name = (user?.name ?? '').trim().isEmpty ? '회원' : (user!.name.trim());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              greeting,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.headingDark,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(
-              Icons.wb_cloudy_outlined,
-              size: 20,
-              color: AppTheme.metaLight,
-            ),
-          ],
+        Text(
+          '$greeting, ${name}님',
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: _textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         const Text(
           '오늘은 어떤 책을 읽으실 건가요?',
           style: TextStyle(
             fontSize: 14,
-            color: AppTheme.bodyMedium,
+            color: _textSecondary,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildTodayReviewPreview(BuildContext context, WidgetRef ref) {
-    final todayReviewAsync = ref.watch(todayReviewProvider);
-
-    return todayReviewAsync.when(
-      data: (reviewData) {
-        final incompleteItems = reviewData.items.where((item) => !item.completed).toList();
-        final totalCount = incompleteItems.length;
-
-        if (totalCount == 0) {
-          // 완료 시 축하 메시지
-          return _buildCompletionCard();
-        }
-
-        // 첫 번째 복습 항목만 미리보기
-        final firstItem = incompleteItems.first;
-
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceWhite,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: const Color(0xFF5D4A3A).withOpacity(0.1),
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+  Widget _buildActionCards(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _actionCard(
+            context,
+            icon: Icons.format_quote,
+            title: '인용구 쓰기',
+            subtitle: '최애책 인상 깊은 문장',
+            onTap: () => context.push('/library'),
           ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _actionCard(
+            context,
+            icon: Icons.note_add_outlined,
+            title: '노트 쓰기',
+            subtitle: '나의 생각과 느낌 기록',
+            onTap: () => context.push('/library'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _actionCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: _grayMedium,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 헤더
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '오늘의 복습',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.headingDark,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        '기억을 다시 만날 시간이에요',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.bodyMedium,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // 아이콘 컨테이너
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF5D4A3A), Color(0xFF4D3A2A)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.format_quote,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // 미리보기 내용
               Container(
-                padding: const EdgeInsets.all(16),
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F8F8),
-                  borderRadius: BorderRadius.circular(16),
+                  color: _primaryBrown.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.format_quote,
-                            color: Color(0xFF5D4A3A),
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            firstItem.itemType == 'NOTE'
-                                ? (firstItem.note?.title ?? '')
-                                : (firstItem.quote?.text ?? ''),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppTheme.headingDark,
-                              height: 1.5,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '📖 ${firstItem.bookTitle}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.metaLight,
-                      ),
-                    ),
-                  ],
+                child: Icon(icon, color: _primaryBrown, size: 24),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _textPrimary,
                 ),
               ),
-              const SizedBox(height: 16),
-              // CTA 버튼
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    context.push('/review');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5D4A3A),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: Text(
-                    '복습하러 가기 ($totalCount개) →',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: _textSecondary,
                 ),
               ),
             ],
           ),
-        );
-      },
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
-        ),
-      ),
-      error: (err, stack) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceWhite,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.divider),
-        ),
-        child: const Text(
-          '복습 데이터를 불러올 수 없습니다',
-          style: TextStyle(color: AppTheme.bodyMedium),
         ),
       ),
     );
   }
 
-  Widget _buildCompletionCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF8F8F8), Color(0xFFF0F0F0)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFF5D4A3A).withOpacity(0.1),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.celebration,
-            size: 48,
-            color: Color(0xFF5D4A3A),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            '🎉 오늘의 복습을 모두 완료했어요!',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.headingDark,
+  Widget _buildTodayReviewCard(BuildContext context, WidgetRef ref) {
+    final todayReviewAsync = ref.watch(todayReviewProvider);
+
+    return todayReviewAsync.when(
+      data: (reviewData) {
+        final incomplete = reviewData.items.where((e) => !e.completed).toList();
+        final count = incomplete.length;
+
+        if (count == 0) {
+          return _completionCard();
+        }
+
+        return Material(
+          color: const Color(0xFFF5F0E8), // light brown/beige
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: () => context.push('/review'),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: _primaryBrown.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.bookmark, color: _primaryBrown, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              '오늘의 복습',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _textPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _primaryBrown,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$count',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '오늘 복습할 기억이 $count개 있어요',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: _textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          '과거의 기억을 다시 돌아보며 기억을 강화해보세요',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios, size: 14, color: _textSecondary),
+                ],
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          const Text(
-            '내일 다시 만나요',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.bodyMedium,
+        );
+      },
+      loading: () => const SizedBox(
+        height: 80,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _completionCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: _grayLight,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _primaryBrown.withOpacity(0.1), width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.celebration, color: _primaryBrown, size: 28),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              '오늘의 복습을 모두 완료했어요!',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _textPrimary,
+              ),
             ),
           ),
         ],
@@ -371,80 +337,61 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentBooks(BuildContext context, WidgetRef ref) {
-    final recentBooksAsync = ref.watch(recentReadBooksProvider);
+  Widget _buildRecentActivity(BuildContext context, WidgetRef ref) {
+    final activityAsync = ref.watch(recentActivityProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              '최근 읽은 책',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.headingDark,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                context.push('/library');
-              },
-              child: const Text(
-                '더보기',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.bodyMedium,
-                ),
-              ),
-            ),
-          ],
+        const Text(
+          '최근 활동',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: _textPrimary,
+          ),
         ),
         const SizedBox(height: 16),
-        recentBooksAsync.when(
-          data: (books) {
-            if (books.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Text(
-                    '최근 읽은 책이 없습니다',
+        activityAsync.when(
+          data: (items) {
+            if (items.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: const Text(
+                    '아직 활동이 없어요',
                     style: TextStyle(
-                      color: AppTheme.bodyMedium,
                       fontSize: 14,
+                      color: _textSecondary,
                     ),
                   ),
                 ),
               );
             }
-
-            // 최대 3권만 표시
-            final displayBooks = books.take(3).toList();
-
-            return SizedBox(
-              height: 200,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: displayBooks.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  return _buildBookCard(context, displayBooks[index]);
-                },
-              ),
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _activityItem(context, item);
+              },
             );
           },
           loading: () => const Center(
             child: Padding(
-              padding: EdgeInsets.all(32),
+              padding: EdgeInsets.all(24),
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (err, stack) => Center(
-            child: Text(
-              '에러: $err',
-              style: const TextStyle(color: AppTheme.bodyMedium),
+          error: (_, __) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                '활동을 불러올 수 없어요',
+                style: const TextStyle(fontSize: 14, color: _textSecondary),
+              ),
             ),
           ),
         ),
@@ -452,179 +399,88 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBookCard(BuildContext context, Book book) {
-    return GestureDetector(
-      onTap: () {
-        context.push('/book/${book.id}', extra: book);
-      },
-      child: Container(
-        width: 128,
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceWhite,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 책 표지
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: 128,
-                height: 170,
-                color: AppTheme.borderSubtle,
-                child: book.coverImageUrl != null
-                    ? Image.network(
-                        book.coverImageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.book,
-                            size: 40,
-                            color: AppTheme.metaLight,
-                          );
-                        },
-                      )
-                    : const Icon(
-                        Icons.book,
-                        size: 40,
-                        color: AppTheme.metaLight,
+  Widget _activityItem(BuildContext context, RecentActivityItem item) {
+    final displayText = item.text.length > 20 ? '${item.text.substring(0, 20)}…' : item.text;
+    final timeAgo = _timeAgo(item.createdAt);
+    final typeLabel = item.isQuote ? '인용구' : '노트';
+
+    return Material(
+      color: _grayMedium,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () {
+          context.push(
+            '/book/${item.bookId}',
+            extra: Book(
+              id: item.bookId,
+              title: item.bookTitle,
+              author: '',
+              category: '',
+              totalPages: 0,
+              currentPage: 0,
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: _primaryBrown.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.format_quote, color: _primaryBrown, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      typeLabel,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _textPrimary,
                       ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // 제목
-            Text(
-              book.title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.headingDark,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            // 저자
-            Text(
-              book.author,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppTheme.metaLight,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            // 진행률 바
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: book.progress / 100,
-                minHeight: 4,
-                backgroundColor: AppTheme.borderSubtle,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  Color(0xFF5D4A3A),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$displayText (${item.bookTitle})',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: _textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              Text(
+                timeAgo,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: _textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDailyQuote(BuildContext context, WidgetRef ref) {
-    // TODO: 오늘의 인용구 API가 있으면 사용, 없으면 최근 인용구 중 하나 표시
-    // 일단은 최근 읽은 책의 인용구를 가져오는 방식으로 구현
-    final recentBooksAsync = ref.watch(recentReadBooksProvider);
-
-    return recentBooksAsync.when(
-      data: (books) {
-        if (books.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        // 첫 번째 책의 인용구를 가져옴
-        final firstBook = books.first;
-        final quotesAsync = ref.watch(quotesForBookProvider(firstBook.id));
-
-        return quotesAsync.when(
-          data: (quotes) {
-            if (quotes.isEmpty) {
-              return const SizedBox.shrink();
-            }
-
-            // 첫 번째 인용구 사용
-            final quote = quotes.first;
-
-            return Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceWhite,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.divider),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '오늘의 인용구',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.headingDark,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Transform.rotate(
-                        angle: 3.14159, // 180도 회전
-                        child: const Icon(
-                          Icons.format_quote,
-                          size: 24,
-                          color: AppTheme.metaLight,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          quote.text,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: AppTheme.headingDark,
-                            height: 1.6,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.format_quote,
-                        size: 24,
-                        color: AppTheme.metaLight,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '- ${firstBook.title} · ${firstBook.author}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-          loading: () => const SizedBox.shrink(),
-          error: (err, stack) => const SizedBox.shrink(),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (err, stack) => const SizedBox.shrink(),
-    );
+  static String _timeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inDays > 0) return '${diff.inDays}일 전';
+    if (diff.inHours > 0) return '${diff.inHours}시간 전';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
+    return '방금 전';
   }
 }
