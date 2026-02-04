@@ -6,6 +6,7 @@ import '../providers/auth/auth_providers.dart';
 import '../providers/review/review_providers.dart';
 import '../providers/home/recent_activity_provider.dart';
 import '../models/book/book.dart';
+import '../widgets/book_select_modal.dart';
 
 // design.json: primary brown #5d4a3a, grayLight #f8f8f8, grayMedium #f3f3f5, text #3d3d3d / #717182
 const _primaryBrown = Color(0xFF5D4A3A);
@@ -144,7 +145,7 @@ class HomeScreen extends ConsumerWidget {
             icon: Icons.format_quote,
             title: '인용구 쓰기',
             subtitle: '최애책 인상 깊은 문장',
-            onTap: () => context.push('/library'),
+            onTap: () => BookSelectModal.show(context, isQuote: true),
           ),
         ),
         const SizedBox(width: 12),
@@ -154,7 +155,7 @@ class HomeScreen extends ConsumerWidget {
             icon: Icons.note_add_outlined,
             title: '노트 쓰기',
             subtitle: '나의 생각과 느낌 기록',
-            onTap: () => context.push('/library'),
+            onTap: () => BookSelectModal.show(context, isQuote: false),
           ),
         ),
       ],
